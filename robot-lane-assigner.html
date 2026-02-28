@@ -1,0 +1,1295 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lane Assigner</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+--bg: #f0f4f8;
+--white: #ffffff;
+--border: #dde3ec;
+--text: #2d3748;
+--text-mid: #718096;
+--text-light: #a0aec0;
+--blue: #4a90d9;
+--blue-light: #ebf4ff;
+--blue-dark: #2f6eb5;
+--green: #48bb78;
+--green-dark: #2f855a;
+--green-light: #f0fff4;
+--orange: #ed8936;
+--orange-light: #fffaf0;
+--red: #e53e3e;
+--red-light: #fff5f5;
+--yellow: #f6c90e;
+--shadow-sm: 0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.05);
+--shadow: 0 4px 16px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.05);
+--radius: 16px;
+--radius-sm: 10px;
+--radius-xs: 7px;
+--font: 'Nunito', sans-serif;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:var(--font); background:var(--bg); color:var(--text); min-height:100vh; }
+
+/* HEADER */
+.header {
+background:var(--white); border-bottom:1px solid var(--border);
+padding:0 32px; height:64px; display:flex; align-items:center; gap:12px;
+box-shadow:var(--shadow-sm); position:sticky; top:0; z-index:200;
+}
+.header-icon { width:36px; height:36px; background:var(--blue); border-radius:10px; display:grid; place-items:center; font-size:1.1rem; flex-shrink:0; box-shadow:0 2px 8px rgba(74,144,217,0.35); }
+.header-title { font-size:1.15rem; font-weight:800; color:var(--text); letter-spacing:-0.01em; }
+.header-sub { font-size:0.78rem; color:var(--text-light); font-weight:500; margin-left:2px; }
+
+/* LAYOUT */
+.main { max-width:1100px; margin:0 auto; padding:28px 24px 60px; }
+
+/* CARD */
+.card { background:var(--white); border-radius:var(--radius); border:1px solid var(--border); box-shadow:var(--shadow); margin-bottom:20px; overflow:hidden; }
+.card-header { padding:18px 24px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.card-title { font-size:0.9rem; font-weight:800; color:var(--text); display:flex; align-items:center; gap:8px; letter-spacing:-0.01em; }
+.card-title .dot { width:8px; height:8px; border-radius:50%; background:var(--blue); flex-shrink:0; }
+.card-hint { font-size:0.75rem; color:var(--text-light); font-weight:600; }
+
+/* COLLAPSIBLE */
+.collapsible-toggle {
+width:100%; background:none; border:none; cursor:pointer;
+padding:18px 24px; display:flex; align-items:center; justify-content:space-between;
+font-family:var(--font); text-align:left; gap:12px;
+}
+.collapsible-toggle:hover { background:#f8fafc; }
+.toggle-left { display:flex; align-items:center; gap:8px; }
+.toggle-title { font-size:0.9rem; font-weight:800; color:var(--text); letter-spacing:-0.01em; }
+.toggle-dot { width:8px; height:8px; border-radius:50%; background:var(--orange); flex-shrink:0; }
+.toggle-chevron { font-size:0.75rem; color:var(--text-light); transition:transform 0.2s; display:inline-block; }
+.toggle-chevron.open { transform:rotate(180deg); }
+.collapsible-body { display:none; border-top:1px solid var(--border); }
+.collapsible-body.open { display:block; }
+
+/* LINE SELECTOR GRID */
+.lines-grid { padding:20px 24px; display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr)); gap:12px; }
+.line-card { border:2px solid var(--border); border-radius:var(--radius-sm); padding:14px 16px; background:#fafcff; transition:border-color 0.15s,box-shadow 0.15s; }
+.line-card.has-sku { border-color:var(--blue); background:var(--blue-light); box-shadow:0 0 0 3px rgba(74,144,217,0.08); }
+.line-label { font-size:0.72rem; font-weight:800; color:var(--text-mid); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+.line-badge { display:inline-block; background:var(--white); border:1px solid var(--border); border-radius:20px; padding:2px 9px; font-size:0.72rem; font-weight:800; color:var(--text); }
+.line-card.has-sku .line-badge { background:var(--blue); color:#fff; border-color:var(--blue); }
+
+/* SELECT — left-aligned text */
+select, .line-select {
+width:100%; font-family:var(--font); font-size:0.83rem; font-weight:600;
+color:var(--text); background:var(--white); border:1px solid var(--border);
+border-radius:var(--radius-xs); padding:8px 32px 8px 12px;
+appearance:none; -webkit-appearance:none;
+background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23a0aec0' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+background-repeat:no-repeat; background-position:right 10px center;
+cursor:pointer; transition:border-color 0.15s; box-shadow:var(--shadow-sm);
+text-align:left; text-align-last:left; direction:ltr;
+}
+select:focus, .line-select:focus { outline:none; border-color:var(--blue); box-shadow:0 0 0 3px rgba(74,144,217,0.15); }
+select option { text-align:left; }
+.line-select.empty { color:var(--text-light); }
+
+/* ACTION BAR */
+.action-bar { padding:16px 24px 20px; display:flex; align-items:center; gap:12px; border-top:1px solid var(--border); flex-wrap:wrap; }
+.btn-assign { font-family:var(--font); font-size:0.92rem; font-weight:800; background:var(--blue); color:#fff; border:none; border-radius:50px; padding:12px 30px; cursor:pointer; transition:background 0.15s,transform 0.1s,box-shadow 0.15s; box-shadow:0 3px 12px rgba(74,144,217,0.35); display:flex; align-items:center; gap:7px; }
+.btn-assign:hover { background:var(--blue-dark); transform:translateY(-1px); box-shadow:0 5px 18px rgba(74,144,217,0.4); }
+.btn-assign:active { transform:translateY(0); }
+.btn-secondary { font-family:var(--font); font-size:0.82rem; font-weight:700; background:var(--white); color:var(--text-mid); border:1.5px solid var(--border); border-radius:50px; padding:10px 22px; cursor:pointer; transition:all 0.15s; display:flex; align-items:center; gap:6px; }
+.btn-secondary:hover { border-color:var(--blue); color:var(--blue); background:var(--blue-light); }
+.active-count { font-size:0.78rem; font-weight:700; color:var(--text-light); margin-left:auto; }
+
+/* STATS */
+.stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:12px; margin-bottom:20px; }
+.stat-pill { background:var(--white); border:1px solid var(--border); border-radius:var(--radius-sm); padding:16px 18px; box-shadow:var(--shadow-sm); }
+.stat-pill .val { font-size:1.7rem; font-weight:900; line-height:1; color:var(--text); margin-bottom:4px; }
+.stat-pill .lbl { font-size:0.7rem; font-weight:700; color:var(--text-light); text-transform:uppercase; letter-spacing:0.05em; }
+.stat-pill.blue .val { color:var(--blue); }
+.stat-pill.green .val { color:var(--green); }
+.stat-pill.orange .val { color:var(--orange); }
+.stat-pill.yellow .val { color:#c9a200; }
+
+/* RESULTS TABLE */
+.results-table-wrap { overflow-x:auto; }
+table.results { width:100%; border-collapse:collapse; font-size:0.85rem; }
+table.results thead th { padding:11px 18px; text-align:left; font-size:0.7rem; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-light); background:#f8fafc; border-bottom:1px solid var(--border); white-space:nowrap; }
+table.results tbody tr { border-bottom:1px solid #f0f4f8; transition:background 0.1s; }
+table.results tbody tr:last-child { border-bottom:none; }
+table.results tbody tr:hover { background:#f8fafc; }
+table.results td { padding:12px 18px; color:var(--text); vertical-align:middle; }
+.td-line { font-weight:800; font-size:0.9rem; }
+.td-resource { color:var(--text-mid); font-size:0.8rem; font-weight:600; }
+.td-sku { font-weight:600; max-width:230px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* Lane section divider row */
+.lane-group-row td { background:#f8fafc; padding:8px 18px 6px; font-size:0.68rem; font-weight:900; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-light); border-bottom:1px solid var(--border); }
+
+.chip { display:inline-flex; align-items:center; padding:5px 13px; border-radius:50px; font-size:0.8rem; font-weight:800; white-space:nowrap; }
+.chip.r1 { background:#ebf4ff; color:#2b6cb0; }
+.chip.r2 { background:#fff3e6; color:#c05621; }
+.chip.r3 { background:#f0fff4; color:#276749; }
+.chip.unassigned { background:#fff5f5; color:#c53030; }
+.rank-tag { display:inline-block; background:#edf2f7; color:var(--text-mid); font-size:0.72rem; font-weight:700; border-radius:20px; padding:2px 8px; }
+
+/* CONFLICT LOG */
+.conflict-item { display:flex; gap:10px; padding:11px 0; border-bottom:1px solid #f0f4f8; font-size:0.82rem; font-weight:600; line-height:1.5; align-items:flex-start; }
+.conflict-item:last-child { border-bottom:none; }
+.conflict-item strong { color:#c05621; }
+
+/* ── PRODUCT MANAGER ── */
+.pm-body { padding:20px 24px; }
+
+/* Tab bar */
+.pm-tabs { display:flex; gap:6px; margin-bottom:20px; }
+.pm-tab { font-family:var(--font); font-size:0.8rem; font-weight:700; padding:8px 18px; border-radius:50px; border:1.5px solid var(--border); background:var(--white); color:var(--text-mid); cursor:pointer; transition:all 0.15s; }
+.pm-tab.active { background:var(--blue); color:#fff; border-color:var(--blue); box-shadow:0 2px 8px rgba(74,144,217,0.3); }
+.pm-tab:hover:not(.active) { border-color:var(--blue); color:var(--blue); }
+
+.pm-panel { display:none; }
+.pm-panel.active { display:block; }
+
+/* Product list */
+.product-list { display:flex; flex-direction:column; gap:8px; max-height:360px; overflow-y:auto; padding-right:4px; margin-bottom:16px; }
+.product-item { display:flex; align-items:center; gap:10px; padding:10px 14px; border:1.5px solid var(--border); border-radius:var(--radius-xs); background:#fafcff; transition:border-color 0.15s; }
+.product-item:hover { border-color:var(--blue); }
+.product-item-info { flex:1; min-width:0; }
+.product-item-resource { font-size:0.72rem; font-weight:800; color:var(--text-mid); margin-bottom:2px; }
+.product-item-sku { font-size:0.83rem; font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.product-item-lanes { font-size:0.68rem; color:var(--text-light); font-weight:600; margin-top:2px; }
+.btn-icon { background:none; border:none; cursor:pointer; padding:5px 7px; border-radius:6px; font-size:0.9rem; transition:background 0.12s; line-height:1; }
+.btn-icon:hover { background:#f0f4f8; }
+.btn-icon.del:hover { background:#fff5f5; }
+
+/* Form */
+.pm-form { display:grid; gap:14px; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.form-group { display:flex; flex-direction:column; gap:5px; }
+.form-label { font-size:0.72rem; font-weight:800; color:var(--text-mid); text-transform:uppercase; letter-spacing:0.05em; }
+.form-input { font-family:var(--font); font-size:0.85rem; font-weight:600; color:var(--text); background:var(--white); border:1.5px solid var(--border); border-radius:var(--radius-xs); padding:9px 12px; transition:border-color 0.15s; }
+.form-input:focus { outline:none; border-color:var(--blue); box-shadow:0 0 0 3px rgba(74,144,217,0.12); }
+.lane-inputs { display:grid; grid-template-columns:repeat(6,1fr); gap:8px; }
+.lane-input-group { display:flex; flex-direction:column; gap:4px; align-items:center; }
+.lane-input-label { font-size:0.65rem; font-weight:800; color:var(--text-light); text-transform:uppercase; letter-spacing:0.05em; }
+.lane-input-field { width:100%; font-family:var(--font); font-size:0.85rem; font-weight:700; color:var(--blue); background:var(--white); border:1.5px solid var(--border); border-radius:var(--radius-xs); padding:7px 6px; text-align:center; transition:border-color 0.15s; }
+.lane-input-field:focus { outline:none; border-color:var(--blue); box-shadow:0 0 0 3px rgba(74,144,217,0.12); }
+.lane-input-field::placeholder { color:var(--text-light); font-weight:600; }
+
+/* Line assignment in form */
+.line-checkboxes { display:flex; flex-wrap:wrap; gap:8px; }
+.line-check-label { display:flex; align-items:center; gap:5px; cursor:pointer; font-size:0.8rem; font-weight:700; color:var(--text-mid); padding:5px 11px; border:1.5px solid var(--border); border-radius:20px; transition:all 0.12s; user-select:none; }
+.line-check-label:hover { border-color:var(--blue); color:var(--blue); }
+.line-check-label input { accent-color:var(--blue); width:13px; height:13px; }
+.line-check-label.checked { border-color:var(--blue); background:var(--blue-light); color:var(--blue); }
+
+.btn-save { font-family:var(--font); font-size:0.85rem; font-weight:800; background:var(--green); color:#fff; border:none; border-radius:50px; padding:11px 28px; cursor:pointer; transition:all 0.15s; box-shadow:0 2px 8px rgba(72,187,120,0.35); }
+.btn-save:hover { background:var(--green-dark); transform:translateY(-1px); }
+.btn-cancel { font-family:var(--font); font-size:0.82rem; font-weight:700; background:var(--white); color:var(--text-mid); border:1.5px solid var(--border); border-radius:50px; padding:9px 22px; cursor:pointer; transition:all 0.15s; }
+.btn-cancel:hover { border-color:var(--text-mid); }
+
+.form-actions { display:flex; gap:10px; align-items:center; padding-top:4px; }
+
+.pm-msg { font-size:0.8rem; font-weight:700; padding:10px 14px; border-radius:var(--radius-xs); margin-bottom:12px; display:none; }
+.pm-msg.success { background:var(--green-light); color:var(--green-dark); border:1px solid #c6f6d5; display:block; }
+.pm-msg.error { background:var(--red-light); color:var(--red); border:1px solid #fed7d7; display:block; }
+
+
+/* ── LANE OVERRIDES CARD ── */
+.overrides-body { padding: 20px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+@media (max-width: 640px) { .overrides-body { grid-template-columns: 1fr; } }
+
+.override-section-title {
+font-size: 0.72rem; font-weight: 800; color: var(--text-mid);
+text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px;
+display: flex; align-items: center; gap: 7px;
+}
+.override-section-title .icon { font-size: 0.95rem; }
+
+/* Broken lanes grid */
+.broken-lanes-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.broken-lane-label {
+display: flex; align-items: center; gap: 7px; cursor: pointer;
+padding: 8px 11px; border: 1.5px solid var(--border); border-radius: var(--radius-xs);
+font-size: 0.82rem; font-weight: 700; color: var(--text-mid);
+transition: all 0.12s; user-select: none; background: var(--white);
+}
+.broken-lane-label:hover { border-color: var(--red); color: var(--red); }
+.broken-lane-label input { accent-color: var(--red); width: 14px; height: 14px; flex-shrink: 0; }
+.broken-lane-label.broken {
+border-color: var(--red); background: #fff5f5; color: var(--red);
+text-decoration: line-through;
+}
+
+/* Forced assignments */
+.forced-rows { display: flex; flex-direction: column; gap: 8px; }
+.forced-row {
+display: grid; grid-template-columns: 80px 1fr; align-items: center; gap: 8px;
+}
+.forced-lane-chip {
+display: inline-flex; align-items: center; justify-content: center;
+padding: 6px 10px; border-radius: 50px; font-size: 0.78rem; font-weight: 800;
+white-space: nowrap; flex-shrink: 0;
+}
+.forced-lane-chip.r1 { background: #ebf4ff; color: #2b6cb0; }
+.forced-lane-chip.r2 { background: #fff3e6; color: #c05621; }
+.forced-lane-chip.r3 { background: #f0fff4; color: #276749; }
+.forced-lane-chip.broken-chip { background: #fff5f5; color: #c53030; text-decoration: line-through; opacity: 0.6; }
+
+.forced-select {
+font-family: var(--font); font-size: 0.82rem; font-weight: 600;
+color: var(--text); background: var(--white); border: 1.5px solid var(--border);
+border-radius: var(--radius-xs); padding: 7px 30px 7px 10px;
+appearance: none; -webkit-appearance: none;
+background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23a0aec0' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+background-repeat: no-repeat; background-position: right 8px center;
+cursor: pointer; transition: border-color 0.15s; width: 100%;
+text-align: left; text-align-last: left;
+}
+.forced-select:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(74,144,217,0.12); }
+.forced-select.has-force { border-color: #805ad5; background-color: #faf5ff; color: #553c9a; font-weight: 700; }
+.forced-select:disabled { opacity: 0.4; cursor: not-allowed; background-color: #f8fafc; }
+
+/* Animations */
+@keyframes popIn { from{opacity:0;transform:scale(0.97) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
+.results-section { animation:popIn 0.25s ease; }
+</style>
+</head>
+<body>
+
+<div class="header">
+<div class="header-icon" style="font-size:0.8rem;font-weight:900;color:#fff;letter-spacing:-0.03em;">LA</div>
+<div class="header-title">Lane Assigner</div>
+<div class="header-sub">Robot Palletizing</div>
+</div>
+
+<div class="main">
+
+<!-- PRODUCTION LINES CARD -->
+<div class="card">
+<div class="card-header">
+<div class="card-title"><span class="dot"></span> Production Lines</div>
+<div class="card-hint">Select which SKU each line is running — leave blank if not running</div>
+</div>
+<div class="lines-grid" id="linesGrid"></div>
+<div class="action-bar">
+<button class="btn-assign" onclick="runAssignment()">▶ Assign Lanes</button>
+<button class="btn-secondary" id="exportBtn" style="display:none" onclick="exportCSV()">↓ Export</button>
+<span class="active-count" id="activeCount"></span>
+</div>
+</div>
+
+
+<!-- LANE OVERRIDES CARD (collapsible) -->
+<div class="card" id="overridesCard">
+<button class="collapsible-toggle" onclick="toggleOverrides()">
+<div class="toggle-left">
+<span class="toggle-dot" style="background:var(--red)"></span>
+<span class="toggle-title">Lane Overrides</span>
+<span id="overridesBadge" style="display:none;font-size:0.68rem;font-weight:800;background:#fff5f5;color:var(--red);border:1px solid #fed7d7;border-radius:20px;padding:1px 8px;margin-left:4px;"></span>
+</div>
+<span class="toggle-chevron" id="overridesChevron">▼</span>
+</button>
+<div class="collapsible-body" id="overridesBody">
+<div class="overrides-body">
+
+<!-- LEFT: Broken lanes -->
+<div>
+<div class="override-section-title">
+<span class="icon">🔧</span> Broken Lanes
+</div>
+<div style="font-size:0.75rem;color:var(--text-light);font-weight:600;margin-bottom:12px;">
+Check any lane that is out of service — it will be excluded from all assignments.
+</div>
+<div class="broken-lanes-grid" id="brokenLanesGrid"></div>
+</div>
+
+<!-- RIGHT: Force assignments -->
+<div>
+<div class="override-section-title">
+<span class="icon">📌</span> Force Lane Assignment
+</div>
+<div style="font-size:0.75rem;color:var(--text-light);font-weight:600;margin-bottom:12px;">
+Pin a specific production line to a lane, overriding the algorithm.
+</div>
+<div class="forced-rows" id="forcedRows"></div>
+</div>
+
+</div>
+</div>
+</div>
+
+<!-- RESULTS -->
+<div id="resultsSection" style="display:none" class="results-section">
+<div class="stats-row" id="statsRow"></div>
+<div class="card">
+<div class="card-header">
+<div class="card-title"><span class="dot" style="background:var(--green)"></span> Assignment Results</div>
+<div class="card-hint" id="resultsTicker"></div>
+</div>
+<div class="results-table-wrap">
+<table class="results">
+<thead>
+<tr>
+<th>Assigned Lane</th>
+<th>Line</th>
+<th>Resource #</th>
+<th>Description</th>
+<th>Priority</th>
+</tr>
+</thead>
+<tbody id="resultsBody"></tbody>
+</table>
+</div>
+</div>
+<div class="card" id="conflictCard" style="display:none">
+<div class="card-header">
+<div class="card-title"><span class="dot" style="background:var(--orange)"></span> Conflict Log</div>
+</div>
+<div style="padding:4px 24px 8px" id="conflictLog"></div>
+</div>
+</div>
+
+<!-- PRODUCT MANAGER (collapsible) -->
+<div class="card" id="pmCard">
+<button class="collapsible-toggle" onclick="toggleProductManager()">
+<div class="toggle-left">
+<span class="toggle-dot"></span>
+<span class="toggle-title">Products</span>
+</div>
+<span class="toggle-chevron" id="pmChevron">▼</span>
+</button>
+<div class="collapsible-body" id="pmBody">
+<div class="pm-body">
+<div class="pm-tabs">
+<button class="pm-tab active" onclick="switchTab('browse')">Browse Products</button>
+<button class="pm-tab" onclick="switchTab('add')">Add Product</button>
+</div>
+<div id="pmMsg" class="pm-msg"></div>
+
+<!-- BROWSE TAB -->
+<div class="pm-panel active" id="tab-browse">
+<div class="product-list" id="productList"></div>
+</div>
+
+<!-- ADD TAB -->
+<div class="pm-panel" id="tab-add">
+<div class="pm-form" id="addForm">
+<div class="form-row">
+<div class="form-group">
+<label class="form-label">Resource #</label>
+<input class="form-input" id="add-resource" type="text" placeholder="e.g. 2000481">
+</div>
+<div class="form-group">
+<label class="form-label">Description</label>
+<input class="form-input" id="add-sku" type="text" placeholder="e.g. 8oz Brie Round">
+</div>
+</div>
+<div class="form-group">
+<label class="form-label">Lane Rankings (blank = not available)</label>
+<div class="lane-inputs">
+<div class="lane-input-group"><div class="lane-input-label">R1-1</div><input class="lane-input-field" id="add-R11" type="number" min="1" placeholder="—"></div>
+<div class="lane-input-group"><div class="lane-input-label">R1-2</div><input class="lane-input-field" id="add-R12" type="number" min="1" placeholder="—"></div>
+<div class="lane-input-group"><div class="lane-input-label">R2-1</div><input class="lane-input-field" id="add-R21" type="number" min="1" placeholder="—"></div>
+<div class="lane-input-group"><div class="lane-input-label">R2-2</div><input class="lane-input-field" id="add-R22" type="number" min="1" placeholder="—"></div>
+<div class="lane-input-group"><div class="lane-input-label">R3-1</div><input class="lane-input-field" id="add-R31" type="number" min="1" placeholder="—"></div>
+<div class="lane-input-group"><div class="lane-input-label">R3-2</div><input class="lane-input-field" id="add-R32" type="number" min="1" placeholder="—"></div>
+</div>
+</div>
+<div class="form-group">
+<label class="form-label">Assign to Production Lines</label>
+<div class="line-checkboxes" id="add-lineChecks"></div>
+</div>
+<div class="form-actions">
+<button class="btn-save" onclick="saveNewProduct()">Save Product</button>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+
+</div>
+
+<script>
+const LANE_KEYS = ['R11','R12','R21','R22','R31','R32'];
+const LANE_NAMES = ['R1-1','R1-2','R2-1','R2-2','R3-1','R3-2'];
+
+// ── DATA ─────────────────────────────────────────────────────────
+let ALL_SKUS = [
+{resource:'2000491',sku:'8oz by 6 Brie Round', R11:1,R12:2,R21:'',R22:'',R31:4,R32:3},
+{resource:'2000489',sku:'8oz by 6 Brie Round', R11:1,R12:2,R21:'',R22:'',R31:4,R32:3},
+{resource:'2006545',sku:'8oz by 6 Brie Round', R11:1,R12:2,R21:'',R22:'',R31:4,R32:3},
+{resource:'2000460',sku:'8oz by 6 Brie Round', R11:1,R12:2,R21:'',R22:'',R31:4,R32:3},
+{resource:'2000105',sku:'7oz by 12 Brie Round', R11:1,R12:2,R21:'',R22:'',R31:4,R32:3},
+{resource:'2000201',sku:'7oz by 12 Brie Round', R11:1,R12:2,R21:'',R22:'',R31:4,R32:3},
+{resource:'2000465',sku:'8oz by 6 Brie Round', R11:1,R12:2,R21:'',R22:'',R31:4,R32:3},
+{resource:'2000490',sku:'8oz by 6 Brie Round', R11:1,R12:2,R21:'',R22:'',R31:4,R32:3},
+{resource:'2000481',sku:'8oz by 6 Brie Round', R11:1,R12:2,R21:'',R22:'',R31:4,R32:3},
+{resource:'2000479',sku:'8oz by 6 Brie Round', R11:1,R12:2,R21:'',R22:'',R31:4,R32:3},
+{resource:'2006320',sku:'8oz by 6 Brie Round', R11:1,R12:2,R21:'',R22:'',R31:4,R32:3},
+{resource:'2000548',sku:'8oz by 6 Brie Round', R11:1,R12:2,R21:'',R22:'',R31:4,R32:3},
+{resource:'2000518',sku:'8oz by 18 Brie Round', R11:1,R12:2,R21:'',R22:'',R31:4,R32:3},
+{resource:'2000218',sku:'8oz by 18 Brie Round', R11:1,R12:2,R21:'',R22:'',R31:4,R32:3},
+{resource:'2000201',sku:'7oz by 12 Brie Round', R11:1,R12:2,R21:'',R22:'',R31:4,R32:3},
+{resource:'2000601',sku:'8oz by 12 Brie Round', R11:1,R12:2,R21:'',R22:'',R31:4,R32:3},
+{resource:'2000480',sku:'8oz by 6 Brie Round', R11:3,R12:4,R21:'',R22:'',R31:4,R32:3},
+{resource:'2002480',sku:'8oz by 6 Brie Round', R11:3,R12:4,R21:'',R22:'',R31:4,R32:3},
+{resource:'2001720',sku:'8oz by 12 Brie Round', R11:1,R12:2,R21:'',R22:'',R31:4,R32:3},
+{resource:'2000833',sku:'8oz Feta TJ Chunk', R11:'',R12:'',R21:5,R22:4,R31:'',R32:''},
+{resource:'2007651',sku:'8oz Feta Chunk', R11:6,R12:3,R21:4,R22:2,R31:'',R32:''},
+{resource:'2000851',sku:'24oz by 12 Feta Crumble', R11:3,R12:2,R21:'',R22:4,R31:3,R32:''},
+{resource:'2000850',sku:'24oz by 12 Feta Crumble', R11:3,R12:2,R21:'',R22:4,R31:3,R32:''},
+{resource:'2000885',sku:'24oz by 12 Feta Crumble', R11:3,R12:2,R21:'',R22:4,R31:3,R32:''},
+{resource:'2000852',sku:'24oz by 12 Feta Crumble', R11:3,R12:2,R21:'',R22:4,R31:3,R32:''},
+{resource:'2000888',sku:'6oz by 8 Feta Crumble', R11:4,R12:2,R21:3,R22:1,R31:'',R32:''},
+{resource:'2000787',sku:'6oz by 8 Feta Crumble', R11:4,R12:2,R21:3,R22:1,R31:'',R32:''},
+{resource:'2000784',sku:'6oz by 8 Feta Crumble', R11:4,R12:2,R21:3,R22:1,R31:'',R32:''},
+{resource:'2000791',sku:'6oz by 24 Feta TJ Crumble', R11:4,R12:2,R21:3,R22:1,R31:'',R32:''},
+{resource:'2000771',sku:'12oz by 8 Feta Crumble', R11:4,R12:2,R21:3,R22:1,R31:'',R32:''},
+{resource:'2000659',sku:'20oz by 10 Feta Twin Pack', R11:3,R12:2,R21:4,R22:5,R31:'',R32:''},
+{resource:'2000652',sku:'20oz by 8 Feta Single Pack', R11:3,R12:2,R21:4,R22:5,R31:'',R32:''},
+{resource:'2000642',sku:'40oz by 10 Feta Slab', R11:3,R12:2,R21:4,R22:5,R31:'',R32:''},
+{resource:'2000356',sku:'19oz by 12 Brie Round', R11:1,R12:2,R21:3,R22:4,R31:5,R32:''},
+{resource:'2001354',sku:'18oz by 12 Brie Round', R11:1,R12:2,R21:3,R22:4,R31:5,R32:''},
+{resource:'2001357',sku:'18oz by 12 Brie Rounds', R11:1,R12:2,R21:3,R22:4,R31:5,R32:''},
+{resource:'2000352',sku:'16oz by 6 Brie Rounds', R11:1,R12:2,R21:3,R22:4,R31:5,R32:''},
+{resource:'2000342',sku:'16oz by 12 Brie Rounds', R11:1,R12:2,R21:3,R22:4,R31:5,R32:''},
+{resource:'2001725',sku:'16oz by 12 Brie Rounds', R11:1,R12:2,R21:3,R22:4,R31:5,R32:''},
+{resource:'2000354',sku:'16oz by 12 Brie Rounds', R11:1,R12:2,R21:3,R22:4,R31:5,R32:''},
+];
+
+let LINE_SKU_MAP = {
+'ES-1': ['2000481','2006320','2000548','2000518','2000201','2000601','2000480','2001720','2002480','2000218','2000479','2000490','2000465','2000491','2000201','2000105','2000460','2006546','2000489'],
+'ES-2': ['2000481','2006320','2000548','2000518','2000201','2000601','2000480','2001720','2000356','2001354','2001357','2000352','2000342','2002480','2000218','2000479','2000490','2000465','2000491','2000201','2000105','2000460','2006546','2000489','2001725','2000354'],
+'ES-3': ['2000481','2006320','2000548','2000518','2000201','2000601','2000480','2001720','2000356','2001354','2001357','2000352','2000342','2002480','2000218','2000479','2000490','2000465','2000491','2000201','2000105','2000460','2006546','2000489','2001725','2000354'],
+'Thermo-1': ['2000659','2000652','2000642'],
+'Thermo-2': ['2000833','2007651'],
+'ATS-1': ['2000888','2000787','2000784','2000791','2000771'],
+'ATS-2': ['2000851','2000850','2000885','2000852'],
+};
+
+// ── LANE RESTRICTIONS ─────────────────────────────────────────────
+// If a line is listed here, it can ONLY be assigned the specified lanes.
+// All other lanes are ignored even if the SKU has rankings for them.
+const LINE_LANE_RESTRICTIONS = {
+'ES-3': ['R3-1', 'R3-2'],
+};
+
+// ── LANE PREFERENCES ──────────────────────────────────────────────
+// Lines listed here get priority over other lines when competing for
+// specific lanes. Format: { 'Lane': ['HighPriorityLine', ...] }
+// On a ranking tie for that lane, listed lines win; unlisted lines yield.
+const LANE_PRIORITY_LINES = {
+'R3-1': ['ES-2', 'ES-3'],
+'R3-2': ['ES-2', 'ES-3'],
+};
+
+const selections = {};
+Object.keys(LINE_SKU_MAP).forEach(l => selections[l] = '');
+
+let assignmentResults = [];
+
+// ── LANE OVERRIDES STATE ──────────────────────────────────────────
+const brokenLanes = new Set(); // set of lane names e.g. 'R1-1'
+const forcedLanes = {}; // lane -> line name e.g. {'R2-1': 'ATS-1'}
+
+// ── OVERRIDES UI ──────────────────────────────────────────────────
+function toggleOverrides() {
+const body = document.getElementById('overridesBody');
+const chevron = document.getElementById('overridesChevron');
+const open = body.classList.toggle('open');
+chevron.classList.toggle('open', open);
+if (open) renderOverrides();
+}
+
+function renderOverrides() {
+renderBrokenLanes();
+renderForcedRows();
+}
+
+function renderBrokenLanes() {
+const grid = document.getElementById('brokenLanesGrid');
+grid.innerHTML = LANE_NAMES.map(lane => {
+const broken = brokenLanes.has(lane);
+const cls = lane.startsWith('R1') ? 'r1' : lane.startsWith('R2') ? 'r2' : 'r3';
+return `<label id="broken-lbl-${cssId(lane)}" class="broken-lane-label${broken?' broken':''}"
+style="border-color:${broken?'var(--red)':'var(--border)'}">
+<input type="checkbox" ${broken?'checked':''} value="${esc(lane)}"
+onchange="toggleBrokenLane('${lane}',this)">
+${esc(lane)}
+</label>`;
+}).join('');
+}
+
+function toggleBrokenLane(lane, cb) {
+if (cb.checked) {
+brokenLanes.add(lane);
+// Clear any force on this lane since it's broken
+if (forcedLanes[lane]) { delete forcedLanes[lane]; }
+} else {
+brokenLanes.delete(lane);
+}
+const lbl = document.getElementById(`broken-lbl-${cssId(lane)}`);
+lbl.className = 'broken-lane-label' + (cb.checked ? ' broken' : '');
+lbl.style.borderColor = cb.checked ? 'var(--red)' : 'var(--border)';
+renderForcedRows(); // refresh forced rows (disable broken lanes)
+updateOverridesBadge();
+}
+
+function renderForcedRows() {
+const container = document.getElementById('forcedRows');
+// Show ALL production lines (not just active ones) so user can pre-configure
+// The algorithm will ignore forced assignments for inactive lines
+const allLines = Object.keys(LINE_SKU_MAP);
+
+container.innerHTML = LANE_NAMES.map(lane => {
+const isBroken = brokenLanes.has(lane);
+const forcedLine = forcedLanes[lane] || '';
+const chipClass = lane.startsWith('R1') ? 'r1' : lane.startsWith('R2') ? 'r2' : 'r3';
+
+const opts = allLines.map(l =>
+`<option value="${esc(l)}" ${forcedLine===l?'selected':''}>${esc(l)}</option>`
+).join('');
+
+return `<div class="forced-row">
+<span class="forced-lane-chip ${isBroken?'broken-chip':chipClass}">${esc(lane)}</span>
+<select class="forced-select${forcedLine?' has-force':''}"
+${isBroken?'disabled':''} title="${isBroken?'Lane is broken':''}"
+onchange="updateForcedLane('${lane}',this)">
+<option value="">— Auto assign —</option>
+${opts}
+</select>
+</div>`;
+}).join('');
+}
+
+function updateForcedLane(lane, el) {
+if (el.value) {
+forcedLanes[lane] = el.value;
+el.className = 'forced-select has-force';
+} else {
+delete forcedLanes[lane];
+el.className = 'forced-select';
+}
+updateOverridesBadge();
+}
+
+function updateOverridesBadge() {
+const count = brokenLanes.size + Object.keys(forcedLanes).length;
+const badge = document.getElementById('overridesBadge');
+if (count > 0) {
+badge.style.display = 'inline';
+badge.textContent = `${count} active`;
+} else {
+badge.style.display = 'none';
+}
+}
+
+// ── PRODUCTION LINE SELECTOR ──────────────────────────────────────
+function renderLines() {
+const grid = document.getElementById('linesGrid');
+grid.innerHTML = '';
+Object.entries(LINE_SKU_MAP).forEach(([line, resourceNums]) => {
+const validSkus = ALL_SKUS.filter(s => resourceNums.includes(s.resource));
+const sel = selections[line] || '';
+const hasSku = sel !== '';
+const div = document.createElement('div');
+div.className = 'line-card' + (hasSku ? ' has-sku' : '');
+div.id = `line-card-${cssId(line)}`;
+const seen = new Set();
+const opts = validSkus.filter(s => { if(seen.has(s.resource)) return false; seen.add(s.resource); return true; });
+const restriction = LINE_LANE_RESTRICTIONS[line];
+const restrictionNote = restriction
+? `<div style="margin-top:6px;font-size:0.68rem;font-weight:700;color:#276749;background:#f0fff4;border:1px solid #c6f6d5;border-radius:6px;padding:3px 8px;display:inline-block;">🔒 Restricted to ${restriction.join(', ')}</div>`
+: '';
+div.innerHTML = `
+<div class="line-label"><span class="line-badge">${esc(line)}</span> Running</div>
+<select class="line-select${hasSku?'':' empty'}" onchange="updateSelection('${line}',this)">
+<option value="">— Not Running —</option>
+${opts.map(s=>`<option value="${esc(s.resource)}" ${sel===s.resource?'selected':''}>${esc(s.resource)} — ${esc(s.sku)}</option>`).join('')}
+</select>
+${restrictionNote}`;
+grid.appendChild(div);
+});
+updateActiveCount();
+}
+
+function updateSelection(line, el) {
+selections[line] = el.value;
+const card = document.getElementById(`line-card-${cssId(line)}`);
+card.className = 'line-card' + (el.value ? ' has-sku' : '');
+el.className = 'line-select' + (el.value ? '' : ' empty');
+updateActiveCount();
+// Refresh forced rows so dropdowns reflect current active lines
+if (document.getElementById('overridesBody').classList.contains('open')) renderForcedRows();
+}
+
+function updateActiveCount() {
+const active = Object.values(selections).filter(v=>v!=='').length;
+document.getElementById('activeCount').textContent = `${active} of ${Object.keys(selections).length} lines active`;
+}
+
+// ── ASSIGNMENT ALGORITHM ──────────────────────────────────────────
+function runAssignment() {
+const activeLines = Object.entries(selections).filter(([,v])=>v!=='');
+if (!activeLines.length) { alert('Please select at least one SKU to run.'); return; }
+
+// If 7+ lines active, there are only 6 robot lanes — one line must stack by hand
+if (activeLines.length > 6) {
+showStackModal(activeLines);
+return;
+}
+doAssignment(activeLines, null);
+}
+
+function showStackModal(activeLines) {
+// Build modal if it doesn't exist
+if (!document.getElementById('stackModal')) {
+const overlay = document.createElement('div');
+overlay.id = 'stackModal';
+overlay.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px;`;
+overlay.innerHTML = `
+<div style="background:#fff;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,0.2);max-width:480px;width:100%;overflow:hidden;">
+<div style="background:#fff7ed;border-bottom:1px solid #fed7aa;padding:20px 24px 16px;display:flex;align-items:flex-start;gap:12px;">
+<span style="font-size:1.6rem;line-height:1;flex-shrink:0;">🖐️</span>
+<div>
+<div style="font-family:'Nunito',sans-serif;font-size:1rem;font-weight:900;color:#7c2d12;margin-bottom:4px;">Manual Stacking Required</div>
+<div style="font-family:'Nunito',sans-serif;font-size:0.8rem;font-weight:600;color:#9a3412;line-height:1.5;">You have <strong id="modalLineCount"></strong> active lines but only <strong>6 robot lanes</strong>. One line must be stacked by hand.<br>Select which line that will be:</div>
+</div>
+</div>
+<div style="padding:20px 24px;">
+<div id="stackLineOptions" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;max-height:280px;overflow-y:auto;"></div>
+<div style="display:flex;gap:10px;justify-content:flex-end;">
+<button onclick="closeStackModal()" style="font-family:'Nunito',sans-serif;font-size:0.82rem;font-weight:700;background:#fff;color:#718096;border:1.5px solid #dde3ec;border-radius:50px;padding:9px 22px;cursor:pointer;">Cancel</button>
+<button id="stackConfirmBtn" onclick="confirmStackChoice()" style="font-family:'Nunito',sans-serif;font-size:0.85rem;font-weight:800;background:#ed8936;color:#fff;border:none;border-radius:50px;padding:10px 26px;cursor:pointer;box-shadow:0 2px 8px rgba(237,137,54,0.35);">Confirm & Assign</button>
+</div>
+</div>
+</div>`;
+document.body.appendChild(overlay);
+overlay.addEventListener('click', e => { if(e.target===overlay) closeStackModal(); });
+}
+
+document.getElementById('modalLineCount').textContent = `${activeLines.length} lines`;
+
+// Store active lines for use after confirmation
+window._pendingActiveLines = activeLines;
+window._stackChoice = null;
+
+const optContainer = document.getElementById('stackLineOptions');
+optContainer.innerHTML = activeLines.map(([line, res]) => {
+const skuRow = ALL_SKUS.find(s=>s.resource===res);
+const skuName = skuRow ? skuRow.sku : res;
+return `<label id="stack-opt-${cssId(line)}" style="display:flex;align-items:center;gap:12px;padding:11px 14px;border:2px solid #dde3ec;border-radius:10px;cursor:pointer;transition:all 0.12s;font-family:'Nunito',sans-serif;" onmouseenter="this.style.borderColor='#ed8936'" onmouseleave="if(window._stackChoice!=='${line}')this.style.borderColor='#dde3ec'">
+<input type="radio" name="stackChoice" value="${esc(line)}" style="accent-color:#ed8936;width:16px;height:16px;flex-shrink:0;" onchange="selectStackLine('${line}')">
+<div style="min-width:0;">
+<div style="font-size:0.78rem;font-weight:900;color:#718096;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:2px;">${esc(line)}</div>
+<div style="font-size:0.83rem;font-weight:700;color:#2d3748;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(res)} — ${esc(skuName)}</div>
+</div>
+</label>`;
+}).join('');
+
+document.getElementById('stackModal').style.display = 'flex';
+}
+
+function selectStackLine(line) {
+window._stackChoice = line;
+// Highlight selected
+document.querySelectorAll('#stackLineOptions label').forEach(lbl => {
+lbl.style.borderColor = lbl.id === `stack-opt-${cssId(line)}` ? '#ed8936' : '#dde3ec';
+lbl.style.background = lbl.id === `stack-opt-${cssId(line)}` ? '#fff7ed' : '#fff';
+});
+}
+
+function closeStackModal() {
+const m = document.getElementById('stackModal');
+if (m) m.style.display = 'none';
+}
+
+function confirmStackChoice() {
+if (!window._stackChoice) {
+alert('Please select a line to stack by hand.');
+return;
+}
+closeStackModal();
+doAssignment(window._pendingActiveLines, window._stackChoice);
+}
+
+function doAssignment(activeLines, stackedLine) {
+const conflicts = [];
+// Exclude the stacked-by-hand line from robot assignment
+const robotLines = stackedLine ? activeLines.filter(([line])=>line!==stackedLine) : activeLines;
+const stackedEntry = stackedLine ? activeLines.find(([line])=>line===stackedLine) : null;
+
+// Lines that are force-pinned to a specific lane
+const forcedLineToLane = {}; // line -> lane
+const forcedLaneToLine = {}; // lane -> line (same data, other direction)
+Object.entries(forcedLanes).forEach(([lane, line]) => {
+// Only apply force if the line is active and the lane isn't broken
+if (selections[line] && !brokenLanes.has(lane)) {
+forcedLineToLane[line] = lane;
+forcedLaneToLine[lane] = line;
+}
+});
+
+const lineDataArr = robotLines.map(([line, res]) => {
+const skuRow = ALL_SKUS.find(s=>s.resource===res);
+const allowedLanes = LINE_LANE_RESTRICTIONS[line] || null; // null = no restriction
+const rankings = {};
+if (skuRow) LANE_KEYS.forEach((k,li) => {
+const laneName = LANE_NAMES[li];
+// Skip broken lanes entirely
+if (brokenLanes.has(laneName)) return;
+// Skip this lane if the line has a restriction and this lane isn't in it
+if (allowedLanes && !allowedLanes.includes(laneName)) return;
+const v = skuRow[k];
+if (v!==''&&v!==null&&v!==undefined&&!isNaN(+v)) rankings[laneName]=+v;
+});
+return { line, resource:res, sku:skuRow?skuRow.sku:'', rankings, restricted: !!allowedLanes };
+});
+// ── APPLY FORCED ASSIGNMENTS FIRST ──────────────────────────────
+// These bypass the algorithm entirely — pin them and remove from candidate pool
+const takenLanes=new Set(), takenLines=new Set(), assigned=new Map();
+
+for (const [lane, line] of Object.entries(forcedLaneToLine)) {
+const ld = lineDataArr.find(x=>x.line===line);
+if (!ld) continue;
+const rank = ld.rankings[lane] ?? 0; // use ranking if available, else 0
+takenLanes.add(lane); takenLines.add(line);
+assigned.set(line, {lane, rank, forced:true});
+}
+
+// ── OPTIMAL ASSIGNMENT (Hungarian / Munkres algorithm) ────────────
+// Finds the globally optimal lane→line assignment that maximises the
+// total priority score across all lines simultaneously. This replaces
+// the old greedy + rescue-pass approach, which could leave lanes empty
+// when a look-ahead swap would have helped.
+//
+// We pad the cost matrix to square (lines × lanes, extras = dummy rows/cols)
+// and treat it as a MAXIMISATION problem by negating scores for the solver.
+
+// Collect available (non-forced, non-taken) lines and lanes
+const unassignedLineData = lineDataArr.filter(ld => !takenLines.has(ld.line));
+const availLanes = LANE_NAMES.filter(l => !takenLanes.has(l) && !brokenLanes.has(l));
+
+const nLines = unassignedLineData.length;
+const nLanes = availLanes.length;
+const n = Math.max(nLines, nLanes); // square dimension
+
+// Build score matrix [line][lane], padding with 0 for dummies
+// A lane that a line cannot use gets score -Infinity (we map to -9999 for the solver)
+const IMPOSSIBLE = -9999;
+const scoreMatrix = [];
+for (let i = 0; i < n; i++) {
+const row = [];
+for (let j = 0; j < n; j++) {
+if (i >= nLines || j >= nLanes) { row.push(0); continue; } // dummy
+const ld = unassignedLineData[i];
+const lane = availLanes[j];
+const rank = ld.rankings[lane];
+if (rank === undefined) { row.push(IMPOSSIBLE); continue; }
+// Boost score for restricted lines on their restricted lanes (they MUST go there)
+const restrictionBonus = ld.restricted ? 1000 : 0;
+row.push(rank + restrictionBonus);
+}
+scoreMatrix.push(row);
+}
+
+// Hungarian algorithm (maximisation via negation → minimisation)
+// Returns an array of length n: assignment[i] = j means row i → col j
+function hungarian(matrix) {
+const sz = matrix.length;
+// Convert to cost (minimisation): negate, shift so all values >= 0
+const maxVal = Math.max(...matrix.flat().filter(v => v > IMPOSSIBLE));
+const cost = matrix.map(row => row.map(v => v <= IMPOSSIBLE ? maxVal - IMPOSSIBLE + 1 : maxVal - v));
+
+// Standard Munkres / Hungarian implementation
+const INF = 1e9;
+const u = new Array(sz+1).fill(0);
+const v = new Array(sz+1).fill(0);
+const p = new Array(sz+1).fill(0); // p[j] = row assigned to column j (1-indexed)
+const way = new Array(sz+1).fill(0);
+
+for (let i = 1; i <= sz; i++) {
+p[0] = i;
+let j0 = 0;
+const minDist = new Array(sz+1).fill(INF);
+const used = new Array(sz+1).fill(false);
+do {
+used[j0] = true;
+const i0 = p[j0];
+let delta = INF, j1 = -1;
+for (let j = 1; j <= sz; j++) {
+if (!used[j]) {
+const cur = cost[i0-1][j-1] - u[i0] - v[j];
+if (cur < minDist[j]) { minDist[j] = cur; way[j] = j0; }
+if (minDist[j] < delta) { delta = minDist[j]; j1 = j; }
+}
+}
+for (let j = 0; j <= sz; j++) {
+if (used[j]) { u[p[j]] += delta; v[j] -= delta; }
+else { minDist[j] -= delta; }
+}
+j0 = j1;
+} while (p[j0] !== 0);
+do { const j1 = way[j0]; p[j0] = p[j1]; j0 = j1; } while (j0);
+}
+
+// Convert back to 0-indexed assignment array
+const result = new Array(sz).fill(-1);
+for (let j = 1; j <= sz; j++) if (p[j] > 0) result[p[j]-1] = j-1;
+return result;
+}
+
+const assignment = hungarian(scoreMatrix);
+
+// Apply the optimal assignment (skip dummy rows/cols and impossible pairings)
+for (let i = 0; i < nLines; i++) {
+const j = assignment[i];
+const ld = unassignedLineData[i];
+if (j === undefined || j >= nLanes) continue; // dummy column
+const lane = availLanes[j];
+const rank = ld.rankings[lane];
+if (rank === undefined) continue; // impossible pairing — line stays unassigned
+takenLanes.add(lane); takenLines.add(ld.line);
+assigned.set(ld.line, {lane, rank});
+}
+assignmentResults = lineDataArr.map(ld => {
+const a = assigned.get(ld.line);
+return {line:ld.line,resource:ld.resource,sku:ld.sku,
+assignedLane:a?a.lane:null, rank:a?a.rank:null,
+stackedByHand:false, restricted:ld.restricted||false,
+forced: a?.forced||false};
+});
+
+// Add broken-lane rows so they appear in results as unavailable
+for (const lane of brokenLanes) {
+// Don't add if a forced line is on this lane (shouldn't happen, but safety check)
+if (!assignmentResults.find(r=>r.assignedLane===lane))
+assignmentResults.push({line:'—', resource:'—', sku:'Out of Service', assignedLane:lane, rank:null, stackedByHand:false, restricted:false, forced:false, broken:true});
+}
+
+// Add stacked-by-hand line at the end
+if (stackedEntry) {
+const [sLine, sRes] = stackedEntry;
+const sSkuRow = ALL_SKUS.find(s=>s.resource===sRes);
+assignmentResults.push({line:sLine, resource:sRes, sku:sSkuRow?sSkuRow.sku:'', assignedLane:null, rank:null, stackedByHand:true});
+}
+// Sort by lane order; unassigned last; stacked-by-hand very last
+assignmentResults.sort((a,b) => {
+if (a.stackedByHand && !b.stackedByHand) return 1;
+if (!a.stackedByHand && b.stackedByHand) return -1;
+const ai = a.assignedLane ? LANE_NAMES.indexOf(a.assignedLane) : 998;
+const bi = b.assignedLane ? LANE_NAMES.indexOf(b.assignedLane) : 998;
+if (ai !== bi) return ai - bi;
+return a.line.localeCompare(b.line, undefined, {numeric:true});
+});
+// ── POST-ASSIGNMENT: handle multi-stack or prompt user ────────────
+const unassignedLines = lineDataArr.filter(ld => !assigned.has(ld.line));
+const alreadyHasStacked = !!stackedEntry;
+
+// If this run was triggered by the multi-stack modal, inject stacked entries
+if (window._pendingMultiStack && window._pendingMultiStack.length > 0) {
+// Append the stacked-by-hand rows (they were excluded from the algorithm entirely)
+assignmentResults.push(...window._pendingMultiStack);
+window._pendingMultiStack = null;
+// Re-sort so stacked rows go to the bottom
+assignmentResults.sort((a,b) => {
+if (a.stackedByHand && !b.stackedByHand) return 1;
+if (!a.stackedByHand && b.stackedByHand) return -1;
+const ai = a.assignedLane ? LANE_NAMES.indexOf(a.assignedLane) : 998;
+const bi = b.assignedLane ? LANE_NAMES.indexOf(b.assignedLane) : 998;
+if (ai !== bi) return ai - bi;
+return a.line.localeCompare(b.line, undefined, {numeric:true});
+});
+renderResults(conflicts);
+return;
+}
+
+// If lines are unassigned and we haven't already handled stacking, prompt user
+if (unassignedLines.length > 0 && !alreadyHasStacked) {
+showUnassignedModal(unassignedLines, lineDataArr, stackedEntry, conflicts);
+return;
+}
+
+renderResults(conflicts);
+}
+
+// ── UNASSIGNED MODAL ──────────────────────────────────────────────
+// Scores a line for "how easy is it to stack?" — lines with fewer/lower-ranked
+// robot lane options are worse to lose to the robot, so they score HIGHER here
+// meaning they are BETTER candidates to stack by hand.
+// Score = number of available robot lanes (fewer = better to stack) + tie-break by max rank
+function stackabilityScore(ld) {
+const usableLaneRankings = Object.entries(ld.rankings)
+.filter(([lane]) => !brokenLanes.has(lane));
+const laneCount = usableLaneRankings.length;
+const maxRank = usableLaneRankings.reduce((m,[,r]) => Math.max(m,r), 0);
+// Fewer lanes and lower max rank = better to stack (higher score)
+return { laneCount, maxRank, score: -laneCount * 100 + (10 - maxRank) };
+}
+
+function showUnassignedModal(unassignedLines, lineDataArr, stackedEntry, conflicts) {
+if (!document.getElementById('unassignedModal')) {
+const overlay = document.createElement('div');
+overlay.id = 'unassignedModal';
+overlay.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px;`;
+overlay.innerHTML = `
+<div style="background:#fff;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,0.2);max-width:520px;width:100%;overflow:hidden;max-height:90vh;display:flex;flex-direction:column;">
+<div style="background:#fff7ed;border-bottom:1px solid #fed7aa;padding:20px 24px 16px;display:flex;align-items:flex-start;gap:12px;flex-shrink:0;">
+<span style="font-size:1.6rem;line-height:1;flex-shrink:0;">🖐️</span>
+<div>
+<div style="font-family:'Nunito',sans-serif;font-size:1rem;font-weight:900;color:#7c2d12;margin-bottom:4px;">Choose Lines to Stack by Hand</div>
+<div style="font-family:'Nunito',sans-serif;font-size:0.8rem;font-weight:600;color:#9a3412;line-height:1.5;" id="unassignedModalDesc"></div>
+</div>
+</div>
+<div id="unassignedRecommendBox" style="display:none;margin:16px 24px 0;padding:10px 14px;background:#f0fff4;border:1px solid #c6f6d5;border-radius:10px;font-family:'Nunito',sans-serif;font-size:0.78rem;font-weight:700;color:#276749;line-height:1.6;flex-shrink:0;"></div>
+<div style="padding:16px 24px 0;flex-shrink:0;">
+<div style="font-size:0.7rem;font-weight:800;color:#a0aec0;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;" id="unassignedSelectHint"></div>
+</div>
+<div style="padding:0 24px;overflow-y:auto;flex:1;">
+<div id="unassignedLineOptions" style="display:flex;flex-direction:column;gap:8px;padding-bottom:4px;"></div>
+</div>
+<div style="padding:16px 24px 20px;display:flex;gap:10px;justify-content:flex-end;flex-shrink:0;border-top:1px solid #f0f4f8;margin-top:12px;">
+<button onclick="closeUnassignedModal()" style="font-family:'Nunito',sans-serif;font-size:0.82rem;font-weight:700;background:#fff;color:#718096;border:1.5px solid #dde3ec;border-radius:50px;padding:9px 22px;cursor:pointer;">Cancel</button>
+<button id="unassignedConfirmBtn" onclick="confirmUnassignedChoice()" style="font-family:'Nunito',sans-serif;font-size:0.85rem;font-weight:800;background:#ed8936;color:#fff;border:none;border-radius:50px;padding:10px 26px;cursor:pointer;box-shadow:0 2px 8px rgba(237,137,54,0.35);">Confirm & Assign</button>
+</div>
+</div>`;
+document.body.appendChild(overlay);
+overlay.addEventListener('click', e => { if(e.target===overlay) closeUnassignedModal(); });
+}
+
+// How many lines need to be stacked
+const needToStack = unassignedLines.length;
+window._unassignedNeedCount = needToStack;
+window._unassignedActiveLines = lineDataArr.map(ld => [ld.line, ld.resource]);
+window._unassignedChoices = new Set();
+
+const activeCount = lineDataArr.length;
+const usableLanes = LANE_NAMES.filter(l => !brokenLanes.has(l)).length;
+
+document.getElementById('unassignedModalDesc').innerHTML =
+`<strong>${activeCount} active lines</strong> but only <strong>${usableLanes} usable robot lanes</strong>. ` +
+`Select exactly <strong>${needToStack} line${needToStack>1?'s':''}</strong> to stack by hand — the rest will be assigned by the algorithm.`;
+
+document.getElementById('unassignedSelectHint').textContent =
+`Select ${needToStack} line${needToStack>1?'s':''} (${needToStack} required)`;
+
+// Score all lines for stackability and build recommendations
+const scored = lineDataArr.map(ld => ({
+ld,
+...stackabilityScore(ld),
+wasUnassigned: unassignedLines.some(u => u.line === ld.line)
+})).sort((a,b) => b.score - a.score); // highest score = best to stack
+
+// Recommended = top N by score
+const recommended = new Set(scored.slice(0, needToStack).map(s => s.ld.line));
+
+// Show recommendation banner
+const recBox = document.getElementById('unassignedRecommendBox');
+const recNames = [...recommended].join(', ');
+recBox.style.display = 'block';
+recBox.innerHTML = `✅ <strong>Recommended to stack:</strong> ${recNames} — ` +
+(needToStack === 1
+? `this line has the fewest robot lane options (${scored[0].laneCount} lane${scored[0].laneCount!==1?'s':''} available), so it's the least costly to pull off the robot.`
+: `these lines have the fewest robot lane options and lowest priority rankings, making them the least costly to pull off.`);
+
+// Pre-select recommended lines
+window._unassignedChoices = new Set([...recommended]);
+
+const optContainer = document.getElementById('unassignedLineOptions');
+// Sort: recommended first, then rest alphabetically
+const sorted = [
+...scored.filter(s => recommended.has(s.ld.line)),
+...scored.filter(s => !recommended.has(s.ld.line)).sort((a,b)=>a.ld.line.localeCompare(b.ld.line))
+];
+
+optContainer.innerHTML = sorted.map(({ld, laneCount, maxRank, wasUnassigned}) => {
+const isRec = recommended.has(ld.line);
+const isPreSelected = window._unassignedChoices.has(ld.line);
+
+// Build lane availability summary
+const lanesSummary = laneCount === 0
+? `<span style="color:#c53030;font-weight:800;">No robot lanes available</span>`
+: `${laneCount} robot lane${laneCount!==1?'s':''} available · best rank: ${maxRank}`;
+
+const recBadge = isRec
+? `<span style="font-size:0.62rem;font-weight:800;background:#f0fff4;color:#276749;border:1px solid #c6f6d5;border-radius:20px;padding:1px 7px;margin-left:5px;vertical-align:middle;">★ RECOMMENDED</span>`
+: '';
+const noLaneBadge = wasUnassigned && laneCount > 0
+? `<span style="font-size:0.62rem;font-weight:800;background:#fff5f5;color:#c53030;border:1px solid #fed7d7;border-radius:20px;padding:1px 7px;margin-left:5px;vertical-align:middle;">UNASSIGNED</span>`
+: '';
+
+return `<label id="unasgn-opt-${cssId(ld.line)}"
+style="display:flex;align-items:center;gap:12px;padding:11px 14px;border:2px solid ${isPreSelected?'#ed8936':'#dde3ec'};border-radius:10px;cursor:pointer;font-family:'Nunito',sans-serif;background:${isPreSelected?'#fff7ed':'#fff'};transition:all 0.12s;">
+<input type="checkbox" value="${esc(ld.line)}" ${isPreSelected?'checked':''}
+style="accent-color:#ed8936;width:16px;height:16px;flex-shrink:0;"
+onchange="toggleUnassignedLine('${ld.line}',this)">
+<div style="min-width:0;flex:1;">
+<div style="font-size:0.78rem;font-weight:900;color:#718096;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:2px;">
+${esc(ld.line)}${recBadge}${noLaneBadge}
+</div>
+<div style="font-size:0.83rem;font-weight:700;color:#2d3748;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+${esc(ld.resource)} — ${esc(ld.sku)}
+</div>
+<div style="font-size:0.72rem;font-weight:600;color:#a0aec0;">${lanesSummary}</div>
+</div>
+</label>`;
+}).join('');
+
+updateUnassignedConfirmBtn();
+document.getElementById('unassignedModal').style.display = 'flex';
+}
+
+function toggleUnassignedLine(line, cb) {
+if (cb.checked) {
+window._unassignedChoices.add(line);
+} else {
+window._unassignedChoices.delete(line);
+}
+const lbl = document.getElementById(`unasgn-opt-${cssId(line)}`);
+lbl.style.borderColor = cb.checked ? '#ed8936' : '#dde3ec';
+lbl.style.background = cb.checked ? '#fff7ed' : '#fff';
+updateUnassignedConfirmBtn();
+}
+
+function updateUnassignedConfirmBtn() {
+const need = window._unassignedNeedCount || 1;
+const chosen = window._unassignedChoices.size;
+const btn = document.getElementById('unassignedConfirmBtn');
+const hint = document.getElementById('unassignedSelectHint');
+const correct = chosen === need;
+btn.disabled = !correct;
+btn.style.opacity = correct ? '1' : '0.45';
+btn.style.cursor = correct ? 'pointer' : 'not-allowed';
+hint.textContent = correct
+? `✓ ${chosen} line${chosen>1?'s':''} selected — ready to assign`
+: `Select ${need} line${need>1?'s':''} (${chosen} of ${need} selected)`;
+hint.style.color = correct ? '#276749' : '#a0aec0';
+}
+
+function closeUnassignedModal() {
+const m = document.getElementById('unassignedModal');
+if (m) m.style.display = 'none';
+}
+
+function confirmUnassignedChoice() {
+const need = window._unassignedNeedCount || 1;
+const chosen = [...window._unassignedChoices];
+if (chosen.length !== need) {
+alert(`Please select exactly ${need} line${need>1?'s':''} to stack by hand.`);
+return;
+}
+closeUnassignedModal();
+
+// Only pass robot lines to the algorithm — stacked lines must NOT participate
+// so they don't block lanes that robot lines need.
+const robotLines = window._unassignedActiveLines.filter(([l]) => !window._unassignedChoices.has(l));
+
+// Store the stacked line entries to inject into results after algorithm runs
+window._pendingMultiStack = chosen.map(l => {
+const res = selections[l];
+const skuRow = ALL_SKUS.find(s => s.resource === res);
+return { line:l, resource:res, sku:skuRow?skuRow.sku:'', assignedLane:null, rank:null, stackedByHand:true, restricted:false, forced:false };
+});
+
+doAssignment(robotLines, null);
+}
+
+// ── RENDER RESULTS ────────────────────────────────────────────────
+function laneClass(lane) {
+if (!lane) return 'unassigned';
+return lane.startsWith('R1')?'r1':lane.startsWith('R2')?'r2':'r3';
+}
+
+function renderResults(conflicts) {
+const section = document.getElementById('resultsSection');
+section.style.display = 'block';
+section.className = 'results-section';
+void section.offsetWidth;
+const total=assignmentResults.length, asgd=assignmentResults.filter(r=>r.assignedLane).length;
+const handCount=assignmentResults.filter(r=>r.stackedByHand).length;
+const unassigned=assignmentResults.filter(r=>!r.assignedLane&&!r.stackedByHand).length;
+const lanesUsed=new Set(assignmentResults.filter(r=>r.assignedLane).map(r=>r.assignedLane)).size;
+document.getElementById('statsRow').innerHTML = `
+<div class="stat-pill blue"><div class="val">${total}</div><div class="lbl">Lines Active</div></div>
+<div class="stat-pill green"><div class="val">${asgd}</div><div class="lbl">Assigned</div></div>
+<div class="stat-pill orange"><div class="val">${unassigned}</div><div class="lbl">Unassigned</div></div>
+<div class="stat-pill"><div class="val">${lanesUsed}</div><div class="lbl">Lanes Used</div></div>
+${handCount?`<div class="stat-pill" style="border-color:#fed7aa;"><div class="val" style="color:#c05621;">${handCount}</div><div class="lbl">Stack by Hand</div></div>`:''}
+<div class="stat-pill yellow"><div class="val">${conflicts.length}</div><div class="lbl">Conflicts</div></div>`;
+document.getElementById('resultsTicker').textContent = `${asgd}/${total} assigned · ${new Date().toLocaleTimeString()}`;
+
+// Build rows grouped by lane
+let html = '';
+let lastLane = null;
+const robotRows = assignmentResults.filter(r=>!r.stackedByHand);
+const handRows = assignmentResults.filter(r=>r.stackedByHand);
+
+for (const row of robotRows) {
+const laneName = row.assignedLane || 'Unassigned';
+if (laneName !== lastLane) {
+html += `<tr class="lane-group-row"><td colspan="5">${esc(laneName)}</td></tr>`;
+lastLane = laneName;
+}
+if (row.broken) {
+html += `<tr style="opacity:0.5;background:#fff5f5;">
+<td><span class="chip" style="background:#fff5f5;color:#c53030;border:1.5px dashed #fc8181;">🔧 Broken</span></td>
+<td class="td-line" colspan="3" style="color:var(--text-light);font-style:italic;">Lane out of service</td>
+<td>—</td>
+</tr>`;
+} else {
+const forcedBadge = row.forced ? ` <span style="font-size:0.6rem;font-weight:800;background:#faf5ff;color:#553c9a;border:1px solid #d6bcfa;border-radius:20px;padding:1px 7px;vertical-align:middle;letter-spacing:0.04em;">📌 FORCED</span>` : '';
+html += `<tr>
+<td><span class="chip ${laneClass(row.assignedLane)}">${row.assignedLane ? esc(row.assignedLane) : '— Unassigned'}</span></td>
+<td class="td-line">${esc(row.line)}${forcedBadge}</td>
+<td class="td-resource">${esc(row.resource)}</td>
+<td class="td-sku" title="${esc(row.sku)}">${esc(row.sku)}</td>
+<td>${row.rank!==null?`<span class="rank-tag">${row.rank}</span>`:'<span style="color:var(--text-light);font-size:0.75rem">—</span>'}</td>
+</tr>`;
+}
+}
+
+if (handRows.length) {
+html += `<tr class="lane-group-row" style="background:#fff7ed;"><td colspan="5" style="color:#c05621;">🖐️ &nbsp;Stack by Hand</td></tr>`;
+for (const row of handRows) {
+html += `<tr style="background:#fffaf5;">
+<td><span class="chip" style="background:#fff0e0;color:#c05621;border:1.5px dashed #ed8936;">Stack by Hand</span></td>
+<td class="td-line">${esc(row.line)}</td>
+<td class="td-resource">${esc(row.resource)}</td>
+<td class="td-sku" title="${esc(row.sku)}">${esc(row.sku)}</td>
+<td><span style="color:var(--text-light);font-size:0.75rem">—</span></td>
+</tr>`;
+}
+}
+document.getElementById('resultsBody').innerHTML = html;
+
+const conflictCard = document.getElementById('conflictCard');
+if (conflicts.length) {
+conflictCard.style.display = 'block';
+document.getElementById('conflictLog').innerHTML = conflicts.map(c=> c.rescue ? `
+<div class="conflict-item"><span>🔄</span>
+<span>Line <strong>${esc(c.line)}</strong> was moved off <strong>${esc(c.lane)}</strong> to free it for restricted line <strong>${esc(c.winner)}</strong>.</span></div>`
+: `
+<div class="conflict-item"><span>⚠️</span>
+<span>Line <strong>${esc(c.line)}</strong> wanted <strong>${esc(c.lane)}</strong> (priority ${c.rank}) but it was taken by <strong>${esc(c.winner)}</strong> (priority ${c.winnerRank}, higher wins) — fallback applied.</span></div>`).join('');
+} else conflictCard.style.display='none';
+
+document.getElementById('exportBtn').style.display='flex';
+section.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ── EXPORT ────────────────────────────────────────────────────────
+function exportCSV() {
+if (!assignmentResults.length) return;
+const rows = assignmentResults.map(r=>`"${r.stackedByHand?'STACK BY HAND':r.assignedLane||'UNASSIGNED'}","${r.line}","${r.resource}","${r.sku}","${r.rank??''}"`);
+const blob = new Blob(['Assigned Lane,Line,Resource #,SKU,Priority\n'+rows.join('\n')],{type:'text/csv'});
+const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`lane_assignments_${Date.now()}.csv`; a.click();
+}
+
+// ── PRODUCT MANAGER ───────────────────────────────────────────────
+function toggleProductManager() {
+const body = document.getElementById('pmBody');
+const chevron = document.getElementById('pmChevron');
+const open = body.classList.toggle('open');
+chevron.classList.toggle('open', open);
+if (open) renderProductList();
+}
+
+function switchTab(tab) {
+document.querySelectorAll('.pm-tab').forEach((t,i)=>{
+const tabs=['browse','add'];
+t.classList.toggle('active', tabs[i]===tab);
+});
+document.querySelectorAll('.pm-panel').forEach(p => p.classList.remove('active'));
+document.getElementById(`tab-${tab}`).classList.add('active');
+clearMsg();
+if (tab==='browse') renderProductList();
+if (tab==='add') renderLineChecks('add-lineChecks', []);
+}
+
+function renderProductList() {
+const list = document.getElementById('productList');
+if (!ALL_SKUS.length) { list.innerHTML='<div style="color:var(--text-light);font-size:0.82rem;font-weight:600;padding:12px 0">No products yet.</div>'; return; }
+list.innerHTML = ALL_SKUS.map((s,i) => {
+const laneStr = LANE_KEYS.map((k,li)=>s[k]!==''&&s[k]!==null&&s[k]!==undefined?`${LANE_NAMES[li]}:${s[k]}`:null).filter(Boolean).join(' · ') || 'No lanes set';
+const lines = Object.entries(LINE_SKU_MAP).filter(([,arr])=>arr.includes(s.resource)).map(([l])=>l).join(', ') || '—';
+return `<div class="product-item">
+<div class="product-item-info">
+<div class="product-item-resource">${esc(s.resource)}</div>
+<div class="product-item-sku">${esc(s.sku)}</div>
+<div class="product-item-lanes">Lanes: ${esc(laneStr)} &nbsp;|&nbsp; Lines: ${esc(lines)}</div>
+</div>
+</div>`;
+}).join('');
+}
+
+function renderLineChecks(containerId, checkedResources) {
+// checkedResources = array of line names that already include this product
+const container = document.getElementById(containerId);
+container.innerHTML = Object.keys(LINE_SKU_MAP).map(line => {
+const checked = checkedResources.includes(line);
+return `<label class="line-check-label${checked?' checked':''}" id="lbl-${containerId}-${cssId(line)}">
+<input type="checkbox" ${checked?'checked':''} value="${esc(line)}" onchange="toggleCheckLabel(this,'${containerId}')">
+${esc(line)}
+</label>`;
+}).join('');
+}
+
+function toggleCheckLabel(cb, containerId) {
+const lbl = document.getElementById(`lbl-${containerId}-${cssId(cb.value)}`);
+lbl.classList.toggle('checked', cb.checked);
+}
+
+
+
+function saveNewProduct() {
+const resource = document.getElementById('add-resource').value.trim();
+const sku = document.getElementById('add-sku').value.trim();
+if (!resource || !sku) { showMsg('Resource # and Description are required.','error'); return; }
+if (ALL_SKUS.find(s=>s.resource===resource)) { showMsg('A product with that Resource # already exists.','error'); return; }
+const newSku = {resource, sku};
+LANE_KEYS.forEach(k => {
+const v = document.getElementById(`add-${k}`).value.trim();
+newSku[k] = v===''?'':(isNaN(+v)?'':+v);
+});
+ALL_SKUS.push(newSku);
+// Update LINE_SKU_MAP
+const checks = document.querySelectorAll('#add-lineChecks input:checked');
+checks.forEach(cb => {
+if (!LINE_SKU_MAP[cb.value]) LINE_SKU_MAP[cb.value]=[];
+if (!LINE_SKU_MAP[cb.value].includes(resource)) LINE_SKU_MAP[cb.value].push(resource);
+if (!selections[cb.value]===undefined) selections[cb.value]='';
+});
+// Clear add form
+document.getElementById('add-resource').value='';
+document.getElementById('add-sku').value='';
+LANE_KEYS.forEach(k=>{ document.getElementById(`add-${k}`).value=''; });
+renderLines();
+switchTab('browse');
+showMsg(`Product "${resource} — ${sku}" added successfully!`,'success');
+}
+
+
+function showMsg(msg, type) {
+const el = document.getElementById('pmMsg');
+el.textContent = msg; el.className = `pm-msg ${type}`;
+clearTimeout(el._t); el._t = setTimeout(()=>{ el.className='pm-msg'; },4000);
+}
+function clearMsg() { document.getElementById('pmMsg').className='pm-msg'; }
+
+// ── UTILS ─────────────────────────────────────────────────────────
+function cssId(s) { return s.replace(/[^a-z0-9]/gi,'_'); }
+function esc(s) {
+if (s===null||s===undefined) return '';
+return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── INIT ──────────────────────────────────────────────────────────
+renderLines();
+</script>
+</body>
+</html>
+robot-lane-assigner.html
+Displaying robot-lane-assigner.html.
