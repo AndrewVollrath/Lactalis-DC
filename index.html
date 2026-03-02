@@ -292,6 +292,11 @@
   .forced-select:disabled { opacity: 0.4; cursor: not-allowed; background-color: #f8fafc; }
 
   /* Warehouse Visual */
+  .wh-scroll-wrap {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
   .wh-scene {
     background: #e8edf4;
     border-radius: 14px;
@@ -299,6 +304,7 @@
     margin-top: 20px;
     position: relative;
     overflow: hidden;
+    min-width: 480px; /* prevents squishing below this */
   }
   .wh-scene::before {
     content: '';
@@ -1049,6 +1055,25 @@ function doAssignment(activeLines, stackedLine) {
   const nLanes = availLanes.length;
   const n = Math.max(nLines, nLanes); // square dimension
 
+  // ── BIG CHEESE DETECTION ─────────────────────────────────────────
+  // Big cheese = large-format brie (16oz, 18oz, 19oz, or any oz value > 12)
+  // These have scanning issues on R1 and should be prioritised for R3-2
+  // when running alongside small-format (7oz / 8oz) ES lines.
+  function isBigCheese(skuName) {
+    if (!skuName) return false;
+    // Match patterns like "16oz", "18oz", "19oz", "20oz", etc.
+    const m = skuName.match(/(\d+)oz/i);
+    if (!m) return false;
+    return parseInt(m[1], 10) > 12;
+  }
+
+  // Detect the scenario: ES-1, ES-2, ES-3 all active
+  const activeLineNames = unassignedLineData.map(ld => ld.line)
+    .concat([...takenLines]); // include already-forced lines
+  const esLinesActive = ['ES-1','ES-2','ES-3'].every(l =>
+    unassignedLineData.some(ld => ld.line === l) || takenLines.has(l)
+  );
+
   // Build score matrix [line][lane], padding with 0 for dummies
   // A lane that a line cannot use gets score -Infinity (we map to -9999 for the solver)
   const IMPOSSIBLE = -9999;
@@ -1063,7 +1088,28 @@ function doAssignment(activeLines, stackedLine) {
       if (rank === undefined) { row.push(IMPOSSIBLE); continue; }
       // Boost score for restricted lines on their restricted lanes (they MUST go there)
       const restrictionBonus = ld.restricted ? 1000 : 0;
-      row.push(rank + restrictionBonus);
+
+      // ── BIG CHEESE BONUSES ──────────────────────────────────────
+      // When all three ES lines are running:
+      //   1. Big cheese on ES-2 or ES-3 gets a large bonus for R3-2 so it
+      //      beats the small-format lines competing for that lane.
+      //   2. Big cheese on ES-2 or ES-3 also prefers R2 lanes over R1 lanes
+      //      to avoid scanning issues on R1.
+      let bigCheeseBonus = 0;
+      if (esLinesActive && (ld.line === 'ES-2' || ld.line === 'ES-3') && isBigCheese(ld.sku)) {
+        if (lane === 'R3-2') {
+          // Strong pull toward R3-2 for big cheese
+          bigCheeseBonus = 500;
+        } else if (lane === 'R2-2' || lane === 'R2-3') {
+          // Prefer R2 over R1 for scanning reliability
+          bigCheeseBonus = 200;
+        } else if (lane === 'R1-2' || lane === 'R1-3') {
+          // Slight penalty for R1 to push big cheese away
+          bigCheeseBonus = -150;
+        }
+      }
+
+      row.push(rank + restrictionBonus + bigCheeseBonus);
     }
     scoreMatrix.push(row);
   }
@@ -1753,7 +1799,7 @@ function renderWarehouse() {
   }
 
   const activeCount = Object.values(laneMap).filter(r => !r.broken).length;
-  viz.innerHTML = `<div class="wh-scene"><div class="wh-robots-row">${robotsHtml}</div></div>${stackedHtml}`;
+  viz.innerHTML = `<div class="wh-scroll-wrap"><div class="wh-scene"><div class="wh-robots-row">${robotsHtml}</div></div></div>${stackedHtml}`;
   document.getElementById('warehouseTicker').textContent = `${activeCount} lane${activeCount!==1?'s':''} active`;
 }
 
