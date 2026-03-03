@@ -65,7 +65,6 @@
   [data-theme="dark"] .broken-lane-label { background:#1e2130; }
   [data-theme="dark"] .stat-pill { background:var(--white); }
   [data-theme="dark"] .log-entry { background:#1e2130; border-color:#2d3148; }
-  /* warehouse is always dark-themed */
   [data-theme="dark"] .log-section-header { background:#13161f; }
   [data-theme="dark"] .form-input, [data-theme="dark"] .lane-input-field { background:var(--white); color:var(--text); }
   [data-theme="dark"] table.results thead th { background:#13161f; }
@@ -117,7 +116,7 @@
   .line-badge { display:inline-block; background:var(--white); border:1px solid var(--border); border-radius:20px; padding:2px 9px; font-size:0.72rem; font-weight:800; color:var(--text); }
   .line-card.has-sku .line-badge { background:var(--blue); color:#fff; border-color:var(--blue); }
 
-  /* SELECT — left-aligned text */
+  /* SELECT */
   select, .line-select {
     width:100%; font-family:var(--font); font-size:0.83rem; font-weight:600;
     color:var(--text); background:var(--white); border:1px solid var(--border);
@@ -217,7 +216,6 @@
   .lane-input-field:focus { outline:none; border-color:var(--blue); box-shadow:0 0 0 3px rgba(74,144,217,0.12); }
   .lane-input-field::placeholder { color:var(--text-light); font-weight:600; }
 
-  /* Line assignment in form */
   .line-checkboxes { display:flex; flex-wrap:wrap; gap:8px; }
   .line-check-label { display:flex; align-items:center; gap:5px; cursor:pointer; font-size:0.8rem; font-weight:700; color:var(--text-mid); padding:5px 11px; border:1.5px solid var(--border); border-radius:20px; transition:all 0.12s; user-select:none; }
   .line-check-label:hover { border-color:var(--blue); color:var(--blue); }
@@ -235,7 +233,6 @@
   .pm-msg.success { background:var(--green-light); color:var(--green-dark); border:1px solid #c6f6d5; display:block; }
   .pm-msg.error { background:var(--red-light); color:var(--red); border:1px solid #fed7d7; display:block; }
 
-
   /* ── LANE OVERRIDES CARD ── */
   .overrides-body { padding: 20px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
   @media (max-width: 640px) { .overrides-body { grid-template-columns: 1fr; } }
@@ -247,7 +244,6 @@
   }
   .override-section-title .icon { font-size: 0.95rem; }
 
-  /* Broken lanes grid */
   .broken-lanes-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .broken-lane-label {
     display: flex; align-items: center; gap: 7px; cursor: pointer;
@@ -262,7 +258,6 @@
     text-decoration: line-through;
   }
 
-  /* Forced assignments */
   .forced-rows { display: flex; flex-direction: column; gap: 8px; }
   .forced-row {
     display: grid; grid-template-columns: 80px 1fr; align-items: center; gap: 8px;
@@ -304,7 +299,7 @@
     margin-top: 20px;
     position: relative;
     overflow: hidden;
-    min-width: 480px; /* prevents squishing below this */
+    min-width: 480px;
   }
   .wh-scene::before {
     content: '';
@@ -427,6 +422,89 @@
     letter-spacing: 0.04em;
   }
   [data-theme="dark"] .wh-lane-rank-num { color: #4ade80; }
+
+  /* ── PALLET BADGE ── */
+  .wh-pallet-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 5px;
+    padding: 3px 7px;
+    border-radius: 5px;
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    border-width: 1.5px;
+    border-style: solid;
+    line-height: 1.2;
+    white-space: nowrap;
+    flex-shrink: 0;
+    align-self: flex-start;
+  }
+  .wh-pallet-badge .pallet-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  /* Pallet type colours */
+  .pallet-white-gma   { background: #f1f5f9; border-color: #94a3b8; color: #334155; }
+  .pallet-white-gma   .pallet-dot { background: #64748b; }
+  .pallet-heat        { background: #fef3c7; border-color: #d97706; color: #92400e; }
+  .pallet-heat        .pallet-dot { background: #d97706; }
+  .pallet-peco        { background: #fee2e2; border-color: #dc2626; color: #991b1b; }
+  .pallet-peco        .pallet-dot { background: #dc2626; }
+  .pallet-taiwan      { background: #ede9fe; border-color: #7c3aed; color: #4c1d95; }
+  .pallet-taiwan      .pallet-dot { background: #7c3aed; }
+  .pallet-unknown     { background: #f8fafc; border-color: #cbd5e0; color: #718096; }
+  .pallet-unknown     .pallet-dot { background: #a0aec0; }
+
+  /* Dark-mode pallet badge adjustments */
+  [data-theme="dark"] .pallet-white-gma  { background: #1e2a3a; border-color: #64748b; color: #94a3b8; }
+  [data-theme="dark"] .pallet-heat       { background: #1f1608; border-color: #d97706; color: #fbbf24; }
+  [data-theme="dark"] .pallet-peco       { background: #1f0a0a; border-color: #dc2626; color: #f87171; }
+  [data-theme="dark"] .pallet-taiwan     { background: #1e1030; border-color: #7c3aed; color: #c4b5fd; }
+  [data-theme="dark"] .pallet-unknown    { background: #1a1d27; border-color: #4a5568; color: #718096; }
+
+  /* ── PALLET LEGEND ── */
+  .wh-pallet-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: var(--white);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    position: relative;
+    z-index: 1;
+  }
+  .wh-legend-title {
+    font-size: 0.62rem;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-light);
+    font-family: 'Courier New', monospace;
+    width: 100%;
+    margin-bottom: 2px;
+  }
+  [data-theme="dark"] .wh-pallet-legend { background: #13161f; }
+  .wh-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    border-width: 1.5px;
+    border-style: solid;
+  }
+  .wh-legend-item .pallet-dot {
+    width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+  }
+
   .wh-stacked-section {
     margin-top: 16px;
     padding: 12px 16px;
@@ -495,7 +573,6 @@
   .log-entry .log-text { flex:1; }
   .log-entry .log-text b { color:var(--text); font-weight:800; }
   .log-entry.forced { border-color:#d6bcfa; background:#faf5ff; }
-  .log-entry.forced .log-icon::after { content:''; }
   .log-entry.assigned { border-color:#c6f6d5; background:var(--green-light); }
   .log-entry.stacked { border-color:#fbd38d; background:var(--orange-light); }
   .log-entry.unassigned { border-color:#fed7d7; background:var(--red-light); }
@@ -537,7 +614,6 @@
     </div>
   </div>
 
-
   <!-- LANE OVERRIDES CARD (collapsible) -->
   <div class="card" id="overridesCard">
     <button class="collapsible-toggle" onclick="toggleOverrides()">
@@ -550,29 +626,20 @@
     </button>
     <div class="collapsible-body" id="overridesBody">
       <div class="overrides-body">
-
-        <!-- LEFT: Broken lanes -->
         <div>
-          <div class="override-section-title">
-            Broken Lanes
-          </div>
+          <div class="override-section-title">Broken Lanes</div>
           <div style="font-size:0.75rem;color:var(--text-light);font-weight:600;margin-bottom:12px;">
             Check any lane that is out of service — it will be excluded from all assignments.
           </div>
           <div class="broken-lanes-grid" id="brokenLanesGrid"></div>
         </div>
-
-        <!-- RIGHT: Force assignments -->
         <div>
-          <div class="override-section-title">
-            Force Lane Assignment
-          </div>
+          <div class="override-section-title">Force Lane Assignment</div>
           <div style="font-size:0.75rem;color:var(--text-light);font-weight:600;margin-bottom:12px;">
             Pin a specific production line to a lane, overriding the algorithm.
           </div>
           <div class="forced-rows" id="forcedRows"></div>
         </div>
-
       </div>
     </div>
   </div>
@@ -648,12 +715,10 @@
         </div>
         <div id="pmMsg" class="pm-msg"></div>
 
-        <!-- BROWSE TAB -->
         <div class="pm-panel active" id="tab-browse">
           <div class="product-list" id="productList"></div>
         </div>
 
-        <!-- ADD TAB -->
         <div class="pm-panel" id="tab-add">
           <div class="pm-form" id="addForm">
             <div class="form-row">
@@ -686,7 +751,6 @@
             </div>
           </div>
         </div>
-
       </div>
     </div>
   </div>
@@ -696,6 +760,47 @@
 <script>
 const LANE_KEYS  = ['R11','R12','R21','R22','R31','R32'];
 const LANE_NAMES = ['R1-2','R1-3','R2-2','R2-3','R3-2','R3-3'];
+
+// ── PALLET TYPE DATA ──────────────────────────────────────────────
+const PALLET_TYPES = {
+  WHITE_GMA: {
+    label: 'White GMA',
+    cssClass: 'pallet-white-gma',
+    resources: new Set(['2000491','2006545','2000460','2000465','2000490','2000481','2000479',
+      '2006320','2000548','2000518','2000218','2000201','2000601','2000480','2002480',
+      '2001720','2000833','2007651','2000885','2000888','2000787','2000784','2000791',
+      '2000771','2000352'])
+  },
+  HEAT_TREATED: {
+    label: 'Heat Treated',
+    cssClass: 'pallet-heat',
+    resources: new Set(['2000105','2000850','2000342','2000489'])
+  },
+  PECO_RED: {
+    label: 'PECO Red',
+    cssClass: 'pallet-peco',
+    resources: new Set(['2000851','2000659','2000652','2000642','2000356','2001354'])
+  },
+  TAIWAN: {
+    label: 'Taiwan (Plastic)',
+    cssClass: 'pallet-taiwan',
+    resources: new Set(['2000852','2001357'])
+  }
+};
+
+function getPalletType(resource) {
+  if (!resource) return null;
+  for (const [, pt] of Object.entries(PALLET_TYPES)) {
+    if (pt.resources.has(resource)) return pt;
+  }
+  return null;
+}
+
+function palletBadgeHtml(resource) {
+  const pt = getPalletType(resource);
+  if (!pt) return '<span class="wh-pallet-badge pallet-unknown"><span class="pallet-dot"></span>Unknown Pallet</span>';
+  return `<span class="wh-pallet-badge ${pt.cssClass}"><span class="pallet-dot"></span>${pt.label}</span>`;
+}
 
 // ── DATA ─────────────────────────────────────────────────────────
 let ALL_SKUS = [
@@ -748,17 +853,10 @@ let LINE_SKU_MAP = {
   'ATS-2':    ['2000851','2000850','2000885','2000852'],
 };
 
-// ── LANE RESTRICTIONS ─────────────────────────────────────────────
-// If a line is listed here, it can ONLY be assigned the specified lanes.
-// All other lanes are ignored even if the SKU has rankings for them.
 const LINE_LANE_RESTRICTIONS = {
   'ES-3': ['R3-2', 'R3-3'],
 };
 
-// ── LANE PREFERENCES ──────────────────────────────────────────────
-// Lines listed here get priority over other lines when competing for
-// specific lanes. Format: { 'Lane': ['HighPriorityLine', ...] }
-// On a ranking tie for that lane, listed lines win; unlisted lines yield.
 const LANE_PRIORITY_LINES = {
   'R3-2': ['ES-2', 'ES-3'],
   'R3-3': ['ES-2', 'ES-3'],
@@ -769,9 +867,8 @@ Object.keys(LINE_SKU_MAP).forEach(l => selections[l] = '');
 
 let assignmentResults = [];
 
-// ── LANE OVERRIDES STATE ──────────────────────────────────────────
-const brokenLanes  = new Set();   // set of lane names e.g. 'R1-2'
-const forcedLanes  = {};          // lane -> line name e.g. {'R2-2': 'ATS-1'}
+const brokenLanes  = new Set();
+const forcedLanes  = {};
 
 // ── OVERRIDES UI ──────────────────────────────────────────────────
 function toggleOverrides() {
@@ -804,7 +901,6 @@ function renderBrokenLanes() {
 function toggleBrokenLane(lane, cb) {
   if (cb.checked) {
     brokenLanes.add(lane);
-    // Clear any force on this lane since it's broken
     if (forcedLanes[lane]) { delete forcedLanes[lane]; }
   } else {
     brokenLanes.delete(lane);
@@ -812,14 +908,12 @@ function toggleBrokenLane(lane, cb) {
   const lbl = document.getElementById(`broken-lbl-${cssId(lane)}`);
   lbl.className = 'broken-lane-label' + (cb.checked ? ' broken' : '');
   lbl.style.borderColor = cb.checked ? 'var(--red)' : 'var(--border)';
-  renderForcedRows(); // refresh forced rows (disable broken lanes)
+  renderForcedRows();
   updateOverridesBadge();
 }
 
 function renderForcedRows() {
   const container = document.getElementById('forcedRows');
-  // Show ALL production lines (not just active ones) so user can pre-configure
-  // The algorithm will ignore forced assignments for inactive lines
   const allLines = Object.keys(LINE_SKU_MAP);
 
   container.innerHTML = LANE_NAMES.map(lane => {
@@ -900,7 +994,6 @@ function updateSelection(line, el) {
   card.className = 'line-card' + (el.value ? ' has-sku' : '');
   el.className = 'line-select' + (el.value ? '' : ' empty');
   updateActiveCount();
-  // Refresh forced rows so dropdowns reflect current active lines
   if (document.getElementById('overridesBody').classList.contains('open')) renderForcedRows();
 }
 
@@ -913,8 +1006,6 @@ function updateActiveCount() {
 function runAssignment() {
   const activeLines = Object.entries(selections).filter(([,v])=>v!=='');
   if (!activeLines.length) { alert('Please select at least one SKU to run.'); return; }
-
-  // If 7+ lines active, there are only 6 robot lanes — one line must stack by hand
   if (activeLines.length > 6) {
     showStackModal(activeLines);
     return;
@@ -923,7 +1014,6 @@ function runAssignment() {
 }
 
 function showStackModal(activeLines) {
-  // Build modal if it doesn't exist
   if (!document.getElementById('stackModal')) {
     const overlay = document.createElement('div');
     overlay.id = 'stackModal';
@@ -950,8 +1040,6 @@ function showStackModal(activeLines) {
   }
 
   document.getElementById('modalLineCount').textContent = `${activeLines.length} lines`;
-
-  // Store active lines for use after confirmation
   window._pendingActiveLines = activeLines;
   window._stackChoice = null;
 
@@ -973,7 +1061,6 @@ function showStackModal(activeLines) {
 
 function selectStackLine(line) {
   window._stackChoice = line;
-  // Highlight selected
   document.querySelectorAll('#stackLineOptions label').forEach(lbl => {
     lbl.style.borderColor = lbl.id === `stack-opt-${cssId(line)}` ? '#ed8936' : '#dde3ec';
     lbl.style.background  = lbl.id === `stack-opt-${cssId(line)}` ? '#fff7ed' : '#fff';
@@ -996,15 +1083,12 @@ function confirmStackChoice() {
 
 function doAssignment(activeLines, stackedLine) {
   const conflicts = [];
-  // Exclude the stacked-by-hand line from robot assignment
   const robotLines = stackedLine ? activeLines.filter(([line])=>line!==stackedLine) : activeLines;
   const stackedEntry = stackedLine ? activeLines.find(([line])=>line===stackedLine) : null;
 
-  // Lines that are force-pinned to a specific lane
-  const forcedLineToLane = {}; // line -> lane
-  const forcedLaneToLine = {}; // lane -> line (same data, other direction)
+  const forcedLineToLane = {};
+  const forcedLaneToLine = {};
   Object.entries(forcedLanes).forEach(([lane, line]) => {
-    // Only apply force if the line is active and the lane isn't broken
     if (selections[line] && !brokenLanes.has(lane)) {
       forcedLineToLane[line] = lane;
       forcedLaneToLine[lane] = line;
@@ -1013,122 +1097,78 @@ function doAssignment(activeLines, stackedLine) {
 
   const lineDataArr = robotLines.map(([line, res]) => {
     const skuRow = ALL_SKUS.find(s=>s.resource===res);
-    const allowedLanes = LINE_LANE_RESTRICTIONS[line] || null; // null = no restriction
+    const allowedLanes = LINE_LANE_RESTRICTIONS[line] || null;
     const rankings = {};
     if (skuRow) LANE_KEYS.forEach((k,li) => {
       const laneName = LANE_NAMES[li];
-      // Skip broken lanes entirely
       if (brokenLanes.has(laneName)) return;
-      // Skip this lane if the line has a restriction and this lane isn't in it
       if (allowedLanes && !allowedLanes.includes(laneName)) return;
       const v = skuRow[k];
       if (v!==''&&v!==null&&v!==undefined&&!isNaN(+v)) rankings[laneName]=+v;
     });
     return { line, resource:res, sku:skuRow?skuRow.sku:'', rankings, restricted: !!allowedLanes };
   });
-  // ── APPLY FORCED ASSIGNMENTS FIRST ──────────────────────────────
-  // These bypass the algorithm entirely — pin them and remove from candidate pool
+
   const takenLanes=new Set(), takenLines=new Set(), assigned=new Map();
 
   for (const [lane, line] of Object.entries(forcedLaneToLine)) {
     const ld = lineDataArr.find(x=>x.line===line);
     if (!ld) continue;
-    const rank = ld.rankings[lane] ?? 0; // use ranking if available, else 0
+    const rank = ld.rankings[lane] ?? 0;
     takenLanes.add(lane); takenLines.add(line);
     assigned.set(line, {lane, rank, forced:true});
   }
 
-  // ── OPTIMAL ASSIGNMENT (Hungarian / Munkres algorithm) ────────────
-  // Finds the globally optimal lane→line assignment that maximises the
-  // total priority score across all lines simultaneously.  This replaces
-  // the old greedy + rescue-pass approach, which could leave lanes empty
-  // when a look-ahead swap would have helped.
-  //
-  // We pad the cost matrix to square (lines × lanes, extras = dummy rows/cols)
-  // and treat it as a MAXIMISATION problem by negating scores for the solver.
-
-  // Collect available (non-forced, non-taken) lines and lanes
   const unassignedLineData = lineDataArr.filter(ld => !takenLines.has(ld.line));
   const availLanes = LANE_NAMES.filter(l => !takenLanes.has(l) && !brokenLanes.has(l));
 
   const nLines = unassignedLineData.length;
   const nLanes = availLanes.length;
-  const n = Math.max(nLines, nLanes); // square dimension
+  const n = Math.max(nLines, nLanes);
 
-  // ── BIG CHEESE DETECTION ─────────────────────────────────────────
-  // Big cheese = large-format brie (16oz, 18oz, 19oz, or any oz value > 12)
-  // These have scanning issues on R1 and should be prioritised for R3-2
-  // when running alongside small-format (7oz / 8oz) ES lines.
   function isBigCheese(skuName) {
     if (!skuName) return false;
-    // Match patterns like "16oz", "18oz", "19oz", "20oz", etc.
     const m = skuName.match(/(\d+)oz/i);
     if (!m) return false;
     return parseInt(m[1], 10) > 12;
   }
 
-  // Detect the scenario: ES-1, ES-2, ES-3 all active
-  const activeLineNames = unassignedLineData.map(ld => ld.line)
-    .concat([...takenLines]); // include already-forced lines
+  const activeLineNames = unassignedLineData.map(ld => ld.line).concat([...takenLines]);
   const esLinesActive = ['ES-1','ES-2','ES-3'].every(l =>
     unassignedLineData.some(ld => ld.line === l) || takenLines.has(l)
   );
 
-  // Build score matrix [line][lane], padding with 0 for dummies
-  // A lane that a line cannot use gets score -Infinity (we map to -9999 for the solver)
   const IMPOSSIBLE = -9999;
   const scoreMatrix = [];
   for (let i = 0; i < n; i++) {
     const row = [];
     for (let j = 0; j < n; j++) {
-      if (i >= nLines || j >= nLanes) { row.push(0); continue; } // dummy
+      if (i >= nLines || j >= nLanes) { row.push(0); continue; }
       const ld   = unassignedLineData[i];
       const lane = availLanes[j];
       const rank = ld.rankings[lane];
       if (rank === undefined) { row.push(IMPOSSIBLE); continue; }
-      // Boost score for restricted lines on their restricted lanes (they MUST go there)
       const restrictionBonus = ld.restricted ? 1000 : 0;
-
-      // ── BIG CHEESE BONUSES ──────────────────────────────────────
-      // When all three ES lines are running:
-      //   1. Big cheese on ES-2 or ES-3 gets a large bonus for R3-2 so it
-      //      beats the small-format lines competing for that lane.
-      //   2. Big cheese on ES-2 or ES-3 also prefers R2 lanes over R1 lanes
-      //      to avoid scanning issues on R1.
       let bigCheeseBonus = 0;
       if (esLinesActive && (ld.line === 'ES-2' || ld.line === 'ES-3') && isBigCheese(ld.sku)) {
-        if (lane === 'R3-2') {
-          // Strong pull toward R3-2 for big cheese
-          bigCheeseBonus = 500;
-        } else if (lane === 'R2-2' || lane === 'R2-3') {
-          // Prefer R2 over R1 for scanning reliability
-          bigCheeseBonus = 200;
-        } else if (lane === 'R1-2' || lane === 'R1-3') {
-          // Slight penalty for R1 to push big cheese away
-          bigCheeseBonus = -150;
-        }
+        if (lane === 'R3-2') bigCheeseBonus = 500;
+        else if (lane === 'R2-2' || lane === 'R2-3') bigCheeseBonus = 200;
+        else if (lane === 'R1-2' || lane === 'R1-3') bigCheeseBonus = -150;
       }
-
       row.push(rank + restrictionBonus + bigCheeseBonus);
     }
     scoreMatrix.push(row);
   }
 
-  // Hungarian algorithm (maximisation via negation → minimisation)
-  // Returns an array of length n: assignment[i] = j means row i → col j
   function hungarian(matrix) {
     const sz = matrix.length;
-    // Convert to cost (minimisation): negate, shift so all values >= 0
     const maxVal = Math.max(...matrix.flat().filter(v => v > IMPOSSIBLE));
     const cost = matrix.map(row => row.map(v => v <= IMPOSSIBLE ? maxVal - IMPOSSIBLE + 1 : maxVal - v));
-
-    // Standard Munkres / Hungarian implementation
     const INF = 1e9;
     const u = new Array(sz+1).fill(0);
     const v = new Array(sz+1).fill(0);
-    const p = new Array(sz+1).fill(0); // p[j] = row assigned to column j (1-indexed)
+    const p = new Array(sz+1).fill(0);
     const way = new Array(sz+1).fill(0);
-
     for (let i = 1; i <= sz; i++) {
       p[0] = i;
       let j0 = 0;
@@ -1153,8 +1193,6 @@ function doAssignment(activeLines, stackedLine) {
       } while (p[j0] !== 0);
       do { const j1 = way[j0]; p[j0] = p[j1]; j0 = j1; } while (j0);
     }
-
-    // Convert back to 0-indexed assignment array
     const result = new Array(sz).fill(-1);
     for (let j = 1; j <= sz; j++) if (p[j] > 0) result[p[j]-1] = j-1;
     return result;
@@ -1162,17 +1200,17 @@ function doAssignment(activeLines, stackedLine) {
 
   const assignment = hungarian(scoreMatrix);
 
-  // Apply the optimal assignment (skip dummy rows/cols and impossible pairings)
   for (let i = 0; i < nLines; i++) {
     const j   = assignment[i];
     const ld  = unassignedLineData[i];
-    if (j === undefined || j >= nLanes) continue; // dummy column
+    if (j === undefined || j >= nLanes) continue;
     const lane = availLanes[j];
     const rank = ld.rankings[lane];
-    if (rank === undefined) continue; // impossible pairing — line stays unassigned
+    if (rank === undefined) continue;
     takenLanes.add(lane); takenLines.add(ld.line);
     assigned.set(ld.line, {lane, rank});
   }
+
   assignmentResults = lineDataArr.map(ld => {
     const a = assigned.get(ld.line);
     return {line:ld.line,resource:ld.resource,sku:ld.sku,
@@ -1181,20 +1219,17 @@ function doAssignment(activeLines, stackedLine) {
       forced: a?.forced||false};
   });
 
-  // Add broken-lane rows so they appear in results as unavailable
   for (const lane of brokenLanes) {
-    // Don't add if a forced line is on this lane (shouldn't happen, but safety check)
     if (!assignmentResults.find(r=>r.assignedLane===lane))
       assignmentResults.push({line:'—', resource:'—', sku:'Out of Service', assignedLane:lane, rank:null, stackedByHand:false, restricted:false, forced:false, broken:true});
   }
 
-  // Add stacked-by-hand line at the end
   if (stackedEntry) {
     const [sLine, sRes] = stackedEntry;
     const sSkuRow = ALL_SKUS.find(s=>s.resource===sRes);
     assignmentResults.push({line:sLine, resource:sRes, sku:sSkuRow?sSkuRow.sku:'', assignedLane:null, rank:null, stackedByHand:true});
   }
-  // Sort by lane order; unassigned last; stacked-by-hand very last
+
   assignmentResults.sort((a,b) => {
     if (a.stackedByHand && !b.stackedByHand) return 1;
     if (!a.stackedByHand && b.stackedByHand) return -1;
@@ -1203,16 +1238,13 @@ function doAssignment(activeLines, stackedLine) {
     if (ai !== bi) return ai - bi;
     return a.line.localeCompare(b.line, undefined, {numeric:true});
   });
-  // ── POST-ASSIGNMENT: handle multi-stack or prompt user ────────────
+
   const unassignedLines = lineDataArr.filter(ld => !assigned.has(ld.line));
   const alreadyHasStacked = !!stackedEntry;
 
-  // If this run was triggered by the multi-stack modal, inject stacked entries
   if (window._pendingMultiStack && window._pendingMultiStack.length > 0) {
-    // Append the stacked-by-hand rows (they were excluded from the algorithm entirely)
     assignmentResults.push(...window._pendingMultiStack);
     window._pendingMultiStack = null;
-    // Re-sort so stacked rows go to the bottom
     assignmentResults.sort((a,b) => {
       if (a.stackedByHand && !b.stackedByHand) return 1;
       if (!a.stackedByHand && b.stackedByHand) return -1;
@@ -1229,7 +1261,6 @@ function doAssignment(activeLines, stackedLine) {
     return;
   }
 
-  // If lines are unassigned and we haven't already handled stacking, prompt user
   if (unassignedLines.length > 0 && !alreadyHasStacked) {
     showUnassignedModal(unassignedLines, lineDataArr, stackedEntry, conflicts);
     return;
@@ -1255,7 +1286,6 @@ function buildAlgoLog({ lineDataArr, assigned, forcedLaneToLine, stackedLine, st
 
   const entries = [];
 
-  // ── SECTION: Setup ──────────────────────────────────────────────
   entries.push({ type:'header', text:'Setup' });
 
   const activeCount = lineDataArr.length + (stackedEntry ? 1 : 0) + multiStackNames.length;
@@ -1265,7 +1295,6 @@ function buildAlgoLog({ lineDataArr, assigned, forcedLaneToLine, stackedLine, st
           (brokenLanes.size ? ` · <b>${brokenLanes.size}</b> broken lane${brokenLanes.size!==1?'s':''} excluded (${[...brokenLanes].join(', ')})` : '')
   });
 
-  // Restriction notes
   lineDataArr.forEach(ld => {
     if (ld.restricted) {
       const allowed = LINE_LANE_RESTRICTIONS[ld.line] || [];
@@ -1275,7 +1304,6 @@ function buildAlgoLog({ lineDataArr, assigned, forcedLaneToLine, stackedLine, st
     }
   });
 
-  // ── SECTION: Forced assignments ─────────────────────────────────
   const forcedEntries = Object.entries(forcedLaneToLine);
   if (forcedEntries.length) {
     entries.push({ type:'header', text:'Forced Assignments (bypasses algorithm)' });
@@ -1289,7 +1317,6 @@ function buildAlgoLog({ lineDataArr, assigned, forcedLaneToLine, stackedLine, st
     });
   }
 
-  // ── SECTION: Stack by hand ───────────────────────────────────────
   const allStackedNames = [
     ...(stackedLine ? [stackedLine] : []),
     ...multiStackNames
@@ -1305,7 +1332,6 @@ function buildAlgoLog({ lineDataArr, assigned, forcedLaneToLine, stackedLine, st
     });
   }
 
-  // ── SECTION: Score matrix ────────────────────────────────────────
   if (unassignedLineData.length > 0) {
     entries.push({ type:'header', text:'Score Matrix (Hungarian algorithm input)' });
     entries.push({ type:'info', icon:'·',
@@ -1313,7 +1339,6 @@ function buildAlgoLog({ lineDataArr, assigned, forcedLaneToLine, stackedLine, st
             `Restricted lines receive a +1000 bonus to guarantee their placement. ` +
             `The algorithm maximises the <b>total</b> priority score across all assignments simultaneously.`
     });
-    // Show the matrix as a mini table
     const colHeaders = availLanes.slice(0, nLanes).map(l =>
       `<th style="padding:3px 8px;font-size:0.65rem;font-weight:800;color:var(--text-mid);text-align:center;border-bottom:1px solid var(--border);">${l}</th>`
     ).join('');
@@ -1326,7 +1351,7 @@ function buildAlgoLog({ lineDataArr, assigned, forcedLaneToLine, stackedLine, st
         const cellStyle = isAssigned
           ? 'background:#f0fff4;color:#276749;font-weight:900;border-radius:4px;'
           : impossible ? 'color:var(--text-light);' : '';
-        return `<td style="padding:3px 8px;text-align:center;font-size:0.72rem;font-weight:700;${cellStyle}">${isAssigned?'':''}${displayScore}</td>`;
+        return `<td style="padding:3px 8px;text-align:center;font-size:0.72rem;font-weight:700;${cellStyle}">${displayScore}</td>`;
       }).join('');
       return `<tr><td style="padding:3px 8px;font-size:0.72rem;font-weight:800;white-space:nowrap;border-right:1px solid var(--border);">${ld.line}</td>${cells}</tr>`;
     }).join('');
@@ -1334,7 +1359,6 @@ function buildAlgoLog({ lineDataArr, assigned, forcedLaneToLine, stackedLine, st
     entries.push({ type:'matrix', html: matrixHtml });
   }
 
-  // ── SECTION: Final assignments ───────────────────────────────────
   entries.push({ type:'header', text:'Final Assignments' });
   const sortedAssigned = [...assigned.entries()].sort((a,b) =>
     LANE_NAMES.indexOf(a[1].lane) - LANE_NAMES.indexOf(b[1].lane)
@@ -1354,7 +1378,6 @@ function buildAlgoLog({ lineDataArr, assigned, forcedLaneToLine, stackedLine, st
     });
   });
 
-  // Unassigned
   if (unassignedLines.length) {
     entries.push({ type:'header', text:'Could Not Assign' });
     unassignedLines.forEach(ld => {
@@ -1366,7 +1389,6 @@ function buildAlgoLog({ lineDataArr, assigned, forcedLaneToLine, stackedLine, st
     });
   }
 
-  // ── Render all entries ───────────────────────────────────────────
   entries.forEach(e => {
     if (e.type === 'header') {
       const el = document.createElement('div');
@@ -1404,31 +1426,23 @@ function toggleTheme() {
   localStorage.setItem('laTheme', newTheme);
 }
 
-// Restore saved theme on load
 (function() {
   const saved = localStorage.getItem('laTheme');
   if (saved === 'dark') {
     document.documentElement.setAttribute('data-theme', 'dark');
-    // Update button after DOM is ready
     window.addEventListener('DOMContentLoaded', () => {
-      const icon = document.getElementById('themeIcon');
-      const lbl  = document.getElementById('themeLabel');
+      const lbl = document.getElementById('themeLabel');
       if (lbl) lbl.textContent = 'Light';
     });
   }
 })();
 
 // ── UNASSIGNED MODAL ──────────────────────────────────────────────
-// Scores a line for "how easy is it to stack?" — lines with fewer/lower-ranked
-// robot lane options are worse to lose to the robot, so they score HIGHER here
-// meaning they are BETTER candidates to stack by hand.
-// Score = number of available robot lanes (fewer = better to stack) + tie-break by max rank
 function stackabilityScore(ld) {
   const usableLaneRankings = Object.entries(ld.rankings)
     .filter(([lane]) => !brokenLanes.has(lane));
   const laneCount = usableLaneRankings.length;
   const maxRank   = usableLaneRankings.reduce((m,[,r]) => Math.max(m,r), 0);
-  // Fewer lanes and lower max rank = better to stack (higher score)
   return { laneCount, maxRank, score: -laneCount * 100 + (10 - maxRank) };
 }
 
@@ -1462,7 +1476,6 @@ function showUnassignedModal(unassignedLines, lineDataArr, stackedEntry, conflic
     overlay.addEventListener('click', e => { if(e.target===overlay) closeUnassignedModal(); });
   }
 
-  // How many lines need to be stacked
   const needToStack = unassignedLines.length;
   window._unassignedNeedCount  = needToStack;
   window._unassignedActiveLines = lineDataArr.map(ld => [ld.line, ld.resource]);
@@ -1478,17 +1491,14 @@ function showUnassignedModal(unassignedLines, lineDataArr, stackedEntry, conflic
   document.getElementById('unassignedSelectHint').textContent =
     `Select ${needToStack} line${needToStack>1?'s':''} (${needToStack} required)`;
 
-  // Score all lines for stackability and build recommendations
   const scored = lineDataArr.map(ld => ({
     ld,
     ...stackabilityScore(ld),
     wasUnassigned: unassignedLines.some(u => u.line === ld.line)
-  })).sort((a,b) => b.score - a.score); // highest score = best to stack
+  })).sort((a,b) => b.score - a.score);
 
-  // Recommended = top N by score
   const recommended = new Set(scored.slice(0, needToStack).map(s => s.ld.line));
 
-  // Show recommendation banner
   const recBox = document.getElementById('unassignedRecommendBox');
   const recNames = [...recommended].join(', ');
   recBox.style.display = 'block';
@@ -1497,11 +1507,9 @@ function showUnassignedModal(unassignedLines, lineDataArr, stackedEntry, conflic
       ? `this line has the fewest robot lane options (${scored[0].laneCount} lane${scored[0].laneCount!==1?'s':''} available), so it's the least costly to pull off the robot.`
       : `these lines have the fewest robot lane options and lowest priority rankings, making them the least costly to pull off.`);
 
-  // Pre-select recommended lines
   window._unassignedChoices = new Set([...recommended]);
 
   const optContainer = document.getElementById('unassignedLineOptions');
-  // Sort: recommended first, then rest alphabetically
   const sorted = [
     ...scored.filter(s => recommended.has(s.ld.line)),
     ...scored.filter(s => !recommended.has(s.ld.line)).sort((a,b)=>a.ld.line.localeCompare(b.ld.line))
@@ -1510,19 +1518,15 @@ function showUnassignedModal(unassignedLines, lineDataArr, stackedEntry, conflic
   optContainer.innerHTML = sorted.map(({ld, laneCount, maxRank, wasUnassigned}) => {
     const isRec = recommended.has(ld.line);
     const isPreSelected = window._unassignedChoices.has(ld.line);
-
-    // Build lane availability summary
     const lanesSummary = laneCount === 0
       ? `<span style="color:#c53030;font-weight:800;">No robot lanes available</span>`
       : `${laneCount} robot lane${laneCount!==1?'s':''} available · best rank: ${maxRank}`;
-
     const recBadge = isRec
       ? `<span style="font-size:0.62rem;font-weight:800;background:#f0fff4;color:#276749;border:1px solid #c6f6d5;border-radius:20px;padding:1px 7px;margin-left:5px;vertical-align:middle;"> RECOMMENDED</span>`
       : '';
     const noLaneBadge = wasUnassigned && laneCount > 0
       ? `<span style="font-size:0.62rem;font-weight:800;background:#fff5f5;color:#c53030;border:1px solid #fed7d7;border-radius:20px;padding:1px 7px;margin-left:5px;vertical-align:middle;">UNASSIGNED</span>`
       : '';
-
     return `<label id="unasgn-opt-${cssId(ld.line)}"
       style="display:flex;align-items:center;gap:12px;padding:11px 14px;border:2px solid ${isPreSelected?'#ed8936':'#dde3ec'};border-radius:10px;cursor:pointer;font-family:'Nunito',sans-serif;background:${isPreSelected?'#fff7ed':'#fff'};transition:all 0.12s;">
       <input type="checkbox" value="${esc(ld.line)}" ${isPreSelected?'checked':''}
@@ -1584,18 +1588,12 @@ function confirmUnassignedChoice() {
     return;
   }
   closeUnassignedModal();
-
-  // Only pass robot lines to the algorithm — stacked lines must NOT participate
-  // so they don't block lanes that robot lines need.
   const robotLines = window._unassignedActiveLines.filter(([l]) => !window._unassignedChoices.has(l));
-
-  // Store the stacked line entries to inject into results after algorithm runs
   window._pendingMultiStack = chosen.map(l => {
     const res = selections[l];
     const skuRow = ALL_SKUS.find(s => s.resource === res);
     return { line:l, resource:res, sku:skuRow?skuRow.sku:'', assignedLane:null, rank:null, stackedByHand:true, restricted:false, forced:false };
   });
-
   doAssignment(robotLines, null);
 }
 
@@ -1623,7 +1621,6 @@ function renderResults(conflicts) {
     <div class="stat-pill yellow"><div class="val">${conflicts.length}</div><div class="lbl">Conflicts</div></div>`;
   document.getElementById('resultsTicker').textContent = `${asgd}/${total} assigned · ${new Date().toLocaleTimeString()}`;
 
-  // Build rows grouped by lane
   let html = '';
   let lastLane = null;
   const robotRows = assignmentResults.filter(r=>!r.stackedByHand);
@@ -1700,48 +1697,38 @@ function renderWarehouse() {
     { id: 'Robot 3', lanes: ['R3-2', 'R3-3'] },
   ];
 
-  // KUKA-style side-profile arm SVG, orange palette
   function armSVG(active) {
     const body   = active ? '#e8650a' : '#c87520';
     const dark   = active ? '#b34d08' : '#9a5a18';
     const joint  = '#1a1a1a';
     const shadow = active ? 'rgba(232,101,10,0.3)' : 'rgba(0,0,0,0.15)';
     return `<svg width="100%" viewBox="0 0 220 160" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;filter:drop-shadow(0 6px 18px ${shadow});">
-      <!-- BASE TURRET -->
       <ellipse cx="110" cy="148" rx="46" ry="10" fill="${dark}" opacity="0.6"/>
       <rect x="78" y="130" width="64" height="22" rx="6" fill="${dark}"/>
       <rect x="82" y="124" width="56" height="14" rx="5" fill="${body}"/>
-      <!-- LOWER ARM (angled up-left) -->
       <g transform="rotate(-38 110 118)">
         <rect x="96" y="60" width="28" height="62" rx="8" fill="${body}"/>
         <rect x="100" y="62" width="8" height="40" rx="3" fill="${dark}" opacity="0.4"/>
       </g>
-      <!-- SHOULDER JOINT -->
       <circle cx="110" cy="118" r="16" fill="${joint}"/>
       <circle cx="110" cy="118" r="10" fill="${dark}"/>
       <circle cx="110" cy="118" r="5"  fill="${body}"/>
-      <!-- UPPER ARM (angled up-right) -->
       <g transform="rotate(22 106 76)">
         <rect x="93" y="32" width="26" height="56" rx="8" fill="${body}"/>
         <rect x="97" y="35" width="7" height="36" rx="3" fill="${dark}" opacity="0.35"/>
       </g>
-      <!-- ELBOW JOINT -->
       <circle cx="106" cy="76" r="13" fill="${joint}"/>
       <circle cx="106" cy="76" r="8"  fill="${dark}"/>
       <circle cx="106" cy="76" r="4"  fill="${body}"/>
-      <!-- FOREARM (angled toward gripper) -->
       <g transform="rotate(-15 98 44)">
         <rect x="86" y="22" width="22" height="44" rx="6" fill="${body}"/>
         <rect x="90" y="25" width="6" height="28" rx="2" fill="${dark}" opacity="0.35"/>
       </g>
-      <!-- WRIST JOINT -->
       <circle cx="98" cy="44" r="11" fill="${joint}"/>
       <circle cx="98" cy="44" r="7"  fill="${dark}"/>
-      <!-- GRIPPER HEAD (black box) -->
       <rect x="52" y="10" width="46" height="30" rx="5" fill="${joint}"/>
       <rect x="55" y="13" width="40" height="9"  rx="3" fill="#222"/>
       <rect x="55" y="25" width="40" height="9"  rx="3" fill="#222"/>
-      <!-- GRIPPER FINGERS -->
       <rect x="54"  y="40" width="10" height="14" rx="3" fill="${joint}"/>
       <rect x="82"  y="40" width="10" height="14" rx="3" fill="${joint}"/>
     </svg>`;
@@ -1761,11 +1748,13 @@ function renderWarehouse() {
       inner = `<div class="wh-lane-id">${laneId}</div>
                <div class="wh-lane-line" style="color:#f87171;">Out of service</div>`;
     } else if (isActive) {
+      const palletBadge = palletBadgeHtml(row.resource);
       inner = `<div class="wh-lane-id">${laneId}</div>
                <div class="wh-lane-line">${row.line}</div>
                <div class="wh-lane-res">${row.resource}</div>
                <div class="wh-lane-sku">${row.sku}</div>
-               ${row.rank !== null ? `<div class="wh-lane-rank-num">Priority ${row.rank}</div>` : ''}`;
+               ${row.rank !== null ? `<div class="wh-lane-rank-num">Priority ${row.rank}</div>` : ''}
+               ${palletBadge}`;
     } else {
       inner = `<div class="wh-lane-id">${laneId}</div>
                <div class="wh-lane-line" style="color:#334155;">Empty</div>`;
@@ -1784,14 +1773,46 @@ function renderWarehouse() {
     </div>`;
   }).join('');
 
+  // Build pallet legend — only show types that are actually in use
+  const usedPalletTypes = new Set();
+  for (const r of assignmentResults) {
+    if (r.assignedLane && !r.broken && r.resource) {
+      const pt = getPalletType(r.resource);
+      if (pt) usedPalletTypes.add(pt);
+    }
+    if (r.stackedByHand && r.resource) {
+      const pt = getPalletType(r.resource);
+      if (pt) usedPalletTypes.add(pt);
+    }
+  }
+
+  let legendHtml = '';
+  if (usedPalletTypes.size > 0) {
+    const items = [...usedPalletTypes].map(pt =>
+      `<span class="wh-legend-item ${pt.cssClass}">
+        <span class="pallet-dot"></span>${pt.label}
+      </span>`
+    ).join('');
+    legendHtml = `<div class="wh-pallet-legend">
+      <div class="wh-legend-title">Pallet Types</div>
+      ${items}
+    </div>`;
+  }
+
   let stackedHtml = '';
   if (stackedRows.length) {
-    const cards = stackedRows.map(r => `
-      <div class="wh-stacked-card">
+    const cards = stackedRows.map(r => {
+      const pt = getPalletType(r.resource);
+      const palletBadge = pt
+        ? `<span class="wh-pallet-badge ${pt.cssClass}" style="margin-top:5px;"><span class="pallet-dot"></span>${pt.label}</span>`
+        : '';
+      return `<div class="wh-stacked-card">
         <div class="wh-stacked-card-line">${r.line}</div>
         <div class="wh-stacked-card-res">${r.resource}</div>
         <div class="wh-stacked-card-sku">${r.sku}</div>
-      </div>`).join('');
+        ${palletBadge}
+      </div>`;
+    }).join('');
     stackedHtml = `<div class="wh-stacked-section">
       <div class="wh-stacked-title">Stack by Hand</div>
       <div class="wh-stacked-cards">${cards}</div>
@@ -1799,7 +1820,7 @@ function renderWarehouse() {
   }
 
   const activeCount = Object.values(laneMap).filter(r => !r.broken).length;
-  viz.innerHTML = `<div class="wh-scroll-wrap"><div class="wh-scene"><div class="wh-robots-row">${robotsHtml}</div></div></div>${stackedHtml}`;
+  viz.innerHTML = `<div class="wh-scroll-wrap"><div class="wh-scene"><div class="wh-robots-row">${robotsHtml}</div></div></div>${legendHtml}${stackedHtml}`;
   document.getElementById('warehouseTicker').textContent = `${activeCount} lane${activeCount!==1?'s':''} active`;
 }
 
@@ -1838,9 +1859,13 @@ function renderProductList() {
   list.innerHTML = ALL_SKUS.map((s,i) => {
     const laneStr = LANE_KEYS.map((k,li)=>s[k]!==''&&s[k]!==null&&s[k]!==undefined?`${LANE_NAMES[li]}:${s[k]}`:null).filter(Boolean).join(' · ') || 'No lanes set';
     const lines = Object.entries(LINE_SKU_MAP).filter(([,arr])=>arr.includes(s.resource)).map(([l])=>l).join(', ') || '—';
+    const pt = getPalletType(s.resource);
+    const palletTag = pt
+      ? `<span class="wh-pallet-badge ${pt.cssClass}" style="font-size:0.6rem;padding:2px 6px;"><span class="pallet-dot"></span>${pt.label}</span>`
+      : '';
     return `<div class="product-item">
       <div class="product-item-info">
-        <div class="product-item-resource">${esc(s.resource)}</div>
+        <div class="product-item-resource" style="display:flex;align-items:center;gap:6px;">${esc(s.resource)} ${palletTag}</div>
         <div class="product-item-sku">${esc(s.sku)}</div>
         <div class="product-item-lanes">Lanes: ${esc(laneStr)} &nbsp;|&nbsp; Lines: ${esc(lines)}</div>
       </div>
@@ -1849,7 +1874,6 @@ function renderProductList() {
 }
 
 function renderLineChecks(containerId, checkedResources) {
-  // checkedResources = array of line names that already include this product
   const container = document.getElementById(containerId);
   container.innerHTML = Object.keys(LINE_SKU_MAP).map(line => {
     const checked = checkedResources.includes(line);
@@ -1865,8 +1889,6 @@ function toggleCheckLabel(cb, containerId) {
   lbl.classList.toggle('checked', cb.checked);
 }
 
-
-
 function saveNewProduct() {
   const resource = document.getElementById('add-resource').value.trim();
   const sku = document.getElementById('add-sku').value.trim();
@@ -1878,14 +1900,12 @@ function saveNewProduct() {
     newSku[k] = v===''?'':(isNaN(+v)?'':+v);
   });
   ALL_SKUS.push(newSku);
-  // Update LINE_SKU_MAP
   const checks = document.querySelectorAll('#add-lineChecks input:checked');
   checks.forEach(cb => {
     if (!LINE_SKU_MAP[cb.value]) LINE_SKU_MAP[cb.value]=[];
     if (!LINE_SKU_MAP[cb.value].includes(resource)) LINE_SKU_MAP[cb.value].push(resource);
     if (!selections[cb.value]===undefined) selections[cb.value]='';
   });
-  // Clear add form
   document.getElementById('add-resource').value='';
   document.getElementById('add-sku').value='';
   LANE_KEYS.forEach(k=>{ document.getElementById(`add-${k}`).value=''; });
@@ -1893,7 +1913,6 @@ function saveNewProduct() {
   switchTab('browse');
   showMsg(`Product "${resource} — ${sku}" added successfully!`,'success');
 }
-
 
 function showMsg(msg, type) {
   const el = document.getElementById('pmMsg');
