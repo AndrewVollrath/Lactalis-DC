@@ -1006,10 +1006,35 @@ function updateActiveCount() {
 function runAssignment() {
   const activeLines = Object.entries(selections).filter(([,v])=>v!=='');
   if (!activeLines.length) { alert('Please select at least one SKU to run.'); return; }
-  if (activeLines.length > 6) {
-    showStackModal(activeLines);
+
+  // Count usable lanes (excluding broken ones) to determine how many lines must stack by hand
+  const usableLaneCount = LANE_NAMES.filter(l => !brokenLanes.has(l)).length;
+  const overflow = activeLines.length - usableLaneCount;
+
+  if (overflow > 0) {
+    // Build lineDataArr for stackability scoring (same logic as doAssignment)
+    const lineDataArr = activeLines.map(([line, res]) => {
+      const skuRow = ALL_SKUS.find(s => s.resource === res);
+      const allowedLanes = LINE_LANE_RESTRICTIONS[line] || null;
+      const rankings = {};
+      if (skuRow) LANE_KEYS.forEach((k, li) => {
+        const laneName = LANE_NAMES[li];
+        if (brokenLanes.has(laneName)) return;
+        if (allowedLanes && !allowedLanes.includes(laneName)) return;
+        const v = skuRow[k];
+        if (v !== '' && v !== null && v !== undefined && !isNaN(+v)) rankings[laneName] = +v;
+      });
+      return { line, resource: res, sku: skuRow ? skuRow.sku : '', rankings, restricted: !!allowedLanes };
+    });
+    // Score all lines by stackability and use the worst `overflow` as fake-unassigned
+    // so the modal pre-selects the right recommendations
+    const scored = lineDataArr.map(ld => ({ ld, ...stackabilityScore(ld) }))
+                              .sort((a, b) => b.score - a.score);
+    const fakeUnassigned = scored.slice(0, overflow).map(s => s.ld);
+    showUnassignedModal(fakeUnassigned, lineDataArr, null, []);
     return;
   }
+
   doAssignment(activeLines, null);
 }
 
@@ -1024,7 +1049,7 @@ function showStackModal(activeLines) {
           <span style="width:10px;height:10px;border-radius:50%;background:#ed8936;display:inline-block;flex-shrink:0;margin-top:4px;"></span>
           <div>
             <div style="font-family:'Nunito',sans-serif;font-size:1rem;font-weight:900;color:#7c2d12;margin-bottom:4px;">Manual Stacking Required</div>
-            <div style="font-family:'Nunito',sans-serif;font-size:0.8rem;font-weight:600;color:#9a3412;line-height:1.5;">You have <strong id="modalLineCount"></strong> active lines but only <strong>6 robot lanes</strong>. One line must be stacked by hand.<br>Select which line that will be:</div>
+            <div style="font-family:'Nunito',sans-serif;font-size:0.8rem;font-weight:600;color:#9a3412;line-height:1.5;">You have <strong id="modalLineCount"></strong> active lines but only <strong id="modalLaneCount"></strong> robot lanes available. One line must be stacked by hand.<br>Select which line that will be:</div>
           </div>
         </div>
         <div style="padding:20px 24px;">
@@ -1040,6 +1065,7 @@ function showStackModal(activeLines) {
   }
 
   document.getElementById('modalLineCount').textContent = `${activeLines.length} lines`;
+  document.getElementById('modalLaneCount').textContent = `${LANE_NAMES.filter(l => !brokenLanes.has(l)).length}`;
   window._pendingActiveLines = activeLines;
   window._stackChoice = null;
 
@@ -1230,6 +1256,26 @@ function doAssignment(activeLines, stackedLine) {
     assignmentResults.push({line:sLine, resource:sRes, sku:sSkuRow?sSkuRow.sku:'', assignedLane:null, rank:null, stackedByHand:true});
   }
 
+  // Any robot lines the algorithm couldn't place (no valid lane rankings for available lanes)
+  // automatically become "stack by hand" — no second modal prompt.
+  const unassignedLines = lineDataArr.filter(ld => !assigned.has(ld.line));
+  const autoStackedNotices = []; // track for the notice banner
+  for (const ld of unassignedLines) {
+    const row = assignmentResults.find(r => r.line === ld.line);
+    if (row) {
+      row.stackedByHand = true;
+      row.autoStacked = true; // flag so we can show notice
+      autoStackedNotices.push(ld.line);
+    }
+  }
+
+  // Inject pendingMultiStack lines (chosen upfront to stack before algorithm ran)
+  // These were excluded from robotLines so they are NOT in assignmentResults yet.
+  if (window._pendingMultiStack && window._pendingMultiStack.length > 0) {
+    assignmentResults.push(...window._pendingMultiStack);
+    window._pendingMultiStack = null;
+  }
+
   assignmentResults.sort((a,b) => {
     if (a.stackedByHand && !b.stackedByHand) return 1;
     if (!a.stackedByHand && b.stackedByHand) return -1;
@@ -1239,37 +1285,11 @@ function doAssignment(activeLines, stackedLine) {
     return a.line.localeCompare(b.line, undefined, {numeric:true});
   });
 
-  const unassignedLines = lineDataArr.filter(ld => !assigned.has(ld.line));
-  const alreadyHasStacked = !!stackedEntry;
-
-  if (window._pendingMultiStack && window._pendingMultiStack.length > 0) {
-    assignmentResults.push(...window._pendingMultiStack);
-    window._pendingMultiStack = null;
-    assignmentResults.sort((a,b) => {
-      if (a.stackedByHand && !b.stackedByHand) return 1;
-      if (!a.stackedByHand && b.stackedByHand) return -1;
-      const ai = a.assignedLane ? LANE_NAMES.indexOf(a.assignedLane) : 998;
-      const bi = b.assignedLane ? LANE_NAMES.indexOf(b.assignedLane) : 998;
-      if (ai !== bi) return ai - bi;
-      return a.line.localeCompare(b.line, undefined, {numeric:true});
-    });
-    buildAlgoLog({ lineDataArr, assigned, forcedLaneToLine, stackedLine, stackedEntry,
-                   unassignedLines: lineDataArr.filter(ld => !assigned.has(ld.line) && !assignmentResults.find(r=>r.line===ld.line&&r.stackedByHand)),
-                   multiStackNames: assignmentResults.filter(r=>r.stackedByHand).map(r=>r.line),
-                   scoreMatrix, unassignedLineData, availLanes, nLines, nLanes });
-    renderResults(conflicts);
-    return;
-  }
-
-  if (unassignedLines.length > 0 && !alreadyHasStacked) {
-    showUnassignedModal(unassignedLines, lineDataArr, stackedEntry, conflicts);
-    return;
-  }
-
   buildAlgoLog({ lineDataArr, assigned, forcedLaneToLine, stackedLine, stackedEntry,
-                 unassignedLines, multiStackNames: [],
+                 unassignedLines, multiStackNames: assignmentResults.filter(r=>r.stackedByHand&&!r.autoStacked).map(r=>r.line),
+                 autoStackedNotices,
                  scoreMatrix, unassignedLineData, availLanes, nLines, nLanes });
-  renderResults(conflicts);
+  renderResults(conflicts, autoStackedNotices);
 }
 
 // ── ALGORITHM LOG ────────────────────────────────────────────────
@@ -1278,7 +1298,8 @@ function laneChipClass(lane) {
 }
 
 function buildAlgoLog({ lineDataArr, assigned, forcedLaneToLine, stackedLine, stackedEntry,
-                         unassignedLines, multiStackNames, scoreMatrix, unassignedLineData, availLanes, nLines, nLanes }) {
+                         unassignedLines, multiStackNames, autoStackedNotices = [],
+                         scoreMatrix, unassignedLineData, availLanes, nLines, nLanes }) {
   const card = document.getElementById('algoLogCard');
   const content = document.getElementById('algoLogContent');
   card.style.display = 'block';
@@ -1603,15 +1624,18 @@ function laneClass(lane) {
   return lane.startsWith('R1')?'r1':lane.startsWith('R2')?'r2':'r3';
 }
 
-function renderResults(conflicts) {
+function renderResults(conflicts, autoStackedNotices = []) {
   const section = document.getElementById('resultsSection');
   section.style.display = 'block';
   section.className = 'results-section';
   void section.offsetWidth;
-  const total=assignmentResults.length, asgd=assignmentResults.filter(r=>r.assignedLane).length;
-  const handCount=assignmentResults.filter(r=>r.stackedByHand).length;
-  const unassigned=assignmentResults.filter(r=>!r.assignedLane&&!r.stackedByHand).length;
-  const lanesUsed=new Set(assignmentResults.filter(r=>r.assignedLane).map(r=>r.assignedLane)).size;
+  // Only count real production line rows — not broken-lane placeholder rows
+  const realRows   = assignmentResults.filter(r => !r.broken);
+  const total      = realRows.length;
+  const asgd       = realRows.filter(r => r.assignedLane && !r.stackedByHand).length;
+  const handCount  = realRows.filter(r => r.stackedByHand).length;
+  const unassigned = realRows.filter(r => !r.assignedLane && !r.stackedByHand).length;
+  const lanesUsed  = new Set(assignmentResults.filter(r => r.assignedLane && !r.broken).map(r => r.assignedLane)).size;
   document.getElementById('statsRow').innerHTML = `
     <div class="stat-pill blue"><div class="val">${total}</div><div class="lbl">Lines Active</div></div>
     <div class="stat-pill green"><div class="val">${asgd}</div><div class="lbl">Assigned</div></div>
@@ -1653,9 +1677,12 @@ function renderResults(conflicts) {
   if (handRows.length) {
     html += `<tr class="lane-group-row" style="background:#fff7ed;"><td colspan="5" style="color:#c05621;">Stack by Hand</td></tr>`;
     for (const row of handRows) {
+      const autoBadge = row.autoStacked
+        ? ` <span style="font-size:0.6rem;font-weight:800;background:#fff7ed;color:#c05621;border:1px solid #fbd38d;border-radius:20px;padding:1px 7px;vertical-align:middle;">NO VALID LANE</span>`
+        : '';
       html += `<tr style="background:#fffaf5;">
         <td><span class="chip" style="background:#fff0e0;color:#c05621;border:1.5px dashed #ed8936;width:10px;height:10px;display:inline-block;border-radius:50%;padding:0;"></span></td>
-        <td class="td-line">${esc(row.line)}</td>
+        <td class="td-line">${esc(row.line)}${autoBadge}</td>
         <td class="td-resource">${esc(row.resource)}</td>
         <td class="td-sku" title="${esc(row.sku)}">${esc(row.sku)}</td>
         <td><span style="color:var(--text-light);font-size:0.75rem">—</span></td>
@@ -1663,6 +1690,62 @@ function renderResults(conflicts) {
     }
   }
   document.getElementById('resultsBody').innerHTML = html;
+
+  // Notice banner for auto-stacked lines (couldn't be placed on open lanes)
+  const noticeEl = document.getElementById('autoStackNotice') || (() => {
+    const el = document.createElement('div');
+    el.id = 'autoStackNotice';
+    el.style.cssText = 'display:none;margin-top:12px;';
+    document.querySelector('.results-table-wrap').after(el);
+    return el;
+  })();
+
+  if (autoStackedNotices.length > 0) {
+    // Find which lanes are open (not broken, not taken by an assigned line)
+    const takenLanes = new Set(assignmentResults.filter(r=>r.assignedLane&&!r.broken).map(r=>r.assignedLane));
+    const openLanes  = LANE_NAMES.filter(l => !brokenLanes.has(l) && !takenLanes.has(l));
+
+    // For each open lane, find which lines in the auto-stacked group could have used it
+    const laneLineMap = {};
+    for (const lane of openLanes) {
+      const eligible = autoStackedNotices.filter(lineName => {
+        const row = assignmentResults.find(r => r.line === lineName);
+        if (!row) return false;
+        const skuRow = ALL_SKUS.find(s => s.resource === row.resource);
+        if (!skuRow) return false;
+        const ki = LANE_NAMES.indexOf(lane);
+        const k  = LANE_KEYS[ki];
+        const v  = skuRow[k];
+        return v !== '' && v !== null && v !== undefined && !isNaN(+v);
+      });
+      laneLineMap[lane] = eligible;
+    }
+
+    const laneItems = openLanes.map(lane => {
+      const cls = lane.startsWith('R1') ? 'r1' : lane.startsWith('R2') ? 'r2' : 'r3';
+      const eligible = laneLineMap[lane];
+      const eligText = eligible.length
+        ? `<span style="color:var(--text-mid);font-size:0.72rem;font-weight:600;margin-left:4px;">— ${eligible.map(l=>`<b>${esc(l)}</b>`).join(', ')} can use this lane</span>`
+        : `<span style="color:var(--text-light);font-size:0.72rem;font-weight:600;margin-left:4px;">— no stacked lines have rankings here</span>`;
+      return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+        <span class="chip ${cls}" style="padding:3px 10px;font-size:0.72rem;">${esc(lane)}</span>${eligText}
+      </div>`;
+    }).join('');
+
+    noticeEl.style.display = 'block';
+    noticeEl.innerHTML = `<div style="margin:14px 18px 6px;padding:12px 16px;background:#fff7ed;border:1.5px solid #fbd38d;border-radius:10px;font-size:0.8rem;line-height:1.7;">
+      <div style="font-weight:900;color:#c05621;margin-bottom:6px;">
+        ⚠ ${autoStackedNotices.length} line${autoStackedNotices.length>1?'s were':' was'} moved to Stack by Hand — no compatible lane available
+      </div>
+      <div style="color:var(--text-mid);font-weight:600;font-size:0.75rem;margin-bottom:${openLanes.length?'8px':'0'};">
+        <b style="color:var(--text)">${autoStackedNotices.map(l=>`<b>${esc(l)}</b>`).join(', ')}</b>
+        ${autoStackedNotices.length>1?'have':'has'} no SKU lane rankings that match any currently open robot lane.
+      </div>
+      ${openLanes.length ? `<div style="font-size:0.72rem;font-weight:800;color:var(--text-light);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px;">Open lane${openLanes.length>1?'s':''}</div>${laneItems}` : ''}
+    </div>`;
+  } else {
+    noticeEl.style.display = 'none';
+  }
 
   const conflictCard = document.getElementById('conflictCard');
   if (conflicts.length) {
